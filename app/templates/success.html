@@ -150,6 +150,47 @@
         </ul>
     </section>
 
+    {# ISM #}
+    <section>
+        <h2 class="fs-3">ACSC ISM</h2>
+
+        <table class="table has-strong-codes has-strong-blue-links">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>ISM</th>
+                </tr>
+            </thead>
+            <!-- <template x-for="(example, index) in $store.success.usage_examples" :key="example.appId">
+                <tbody>
+                    <tr :class="(index % 2 == 0) ? 'table-light' : ''">
+                        <td class="align-middle text-break" x-html="example.sentence" :rowspan="example.links.length"></td>
+                        <td class="align-middle text-break">
+                            <a
+                                :href="resolveURL(example.links[0].url)"
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                x-text="example.links[0].name"
+                            ></a>
+                        </td>
+                    </tr>
+                    <template x-for="link in example.links.slice(1)" :key="link.appId">
+                        <tr :class="(index % 2 == 0) ? 'table-light' : ''">
+                            <td class="align-middle text-break">
+                                <a
+                                    :href="resolveURL(link.url)"
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    x-text="link.name"
+                                ></a>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </template> -->
+        </table>
+    </section>
+
     {# Mismappings #}
     {% if success.mismappings |length > 0 %}
     <section>

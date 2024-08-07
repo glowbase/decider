@@ -32,7 +32,7 @@
                     <h3 class="fs-5 my-1">Filter Tactics</h3>
                     <div class="btn-group-vertical w-100 mb-2">
                         <button
-                            class="btn btn-primary"
+                            class="btn btn-success"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#tacticFilterCheckboxes"
@@ -90,7 +90,7 @@
                     <h3 class="fs-5 my-1">Filter Platforms</h3>
                     <div class="btn-group-vertical w-100 mb-2">
                         <button
-                            class="btn btn-primary"
+                            class="btn btn-success"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#platformFilterCheckboxes"
@@ -148,7 +148,7 @@
                     <h3 class="fs-5 my-1">Filter Data Sources</h3>
                     <div class="btn-group-vertical w-100 mb-2">
                         <button
-                            class="btn btn-primary"
+                            class="btn btn-success"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#dataSrcFilterCheckboxes"
@@ -238,14 +238,14 @@
 
                             <div class="card-body">
                                 <div class="card-text" x-html="card.description"></div>
-                            </div>
+                            </a>
 
                             <div class="card-footer">
                                 <a
                                     class="link-strong-blue card-link stretched-link"
                                     :href="resolveURL(card.internal_url)"
                                     :aria-label="`Select Card ${card.tech_name_plain} ${card.tech_id_plain}`"
-                                >Select Card</a>
+                                ></a>
                                 <a
                                     class="link-attack-orange card-link position-relative z-2"
                                     :href="resolveURL(card.attack_url)"
