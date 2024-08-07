@@ -332,6 +332,11 @@ body {
     --bs-btn-disabled-border-color: var(--dhs-red);
 }
 
+.top-link {
+    position: relative;
+    z-index: 2;
+}
+
 strong {
     color: #3f3f3f;
 }
@@ -340,6 +345,10 @@ strong {
     border-radius: 5px;
     border-color: #afafaf;
     overflow: hidden;
+}
+
+.card-body p {
+    margin-bottom: 0;
 }
 
 .card-header {
