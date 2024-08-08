@@ -51,12 +51,20 @@ def get_mappings():
     """Returns a list of custom mapping data stored in JSON file (JSON response)"""
     g.route_title = "Get Custom Mappings"
 
+    technique = request.args.get("technique")
+
+    if (technique is None):
+        logger.error("request failed - technique field missing")
+        return jsonify(message="'technique' field missing"), 400
+
     logger.info("querying custom mappings")
 
     with open('/opt/decider/config/build_sources/mappings/mapping-content-v15.1.json') as mappings_file:
         mappings_data = json.load(mappings_file)
 
-    return jsonify(mappings_data), 200
+    return_value = mappings_data[technique] if technique in mappings_data else []
+
+    return jsonify(return_value), 200
 
 
 @api_.route("/api/mismappings", methods=["GET"])

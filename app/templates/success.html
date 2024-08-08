@@ -163,7 +163,7 @@
                     <th>Code</th>
                 </tr>
             </thead>
-            <template x-for="(ism, index) in $store.success.mappings[$store.success.id].ism">
+            <template x-for="(ism, index) in $store.success.mappings.ism">
                 <tbody>
                     <tr :class="(index % 2 == 0) ? 'table-light' : ''">
                         <td class="align-middle text-break" x-html="ism.description"></td>
@@ -182,7 +182,7 @@
                     <th>Code</th>
                 </tr>
             </thead>
-            <template x-for="(nist, index) in $store.success.mappings[$store.success.id].nist">
+            <template x-for="(nist, index) in $store.success.mappings.nist">
                 <tbody>
                     <tr :class="(index % 2 == 0) ? 'table-light' : ''">
                         <td class="align-middle text-break" x-html="nist.description"></td>
@@ -342,8 +342,8 @@
             });
         });
 
-        const api_url = `${window.location.origin}/api/mappings`
-        const custom_mappings = await fetch(api_url)
+        const api_url = `${window.location.origin}/api/mappings?technique=${success.id}`
+        const mappings = await fetch(api_url)
 
         Alpine.store('success', {
             crumbs: bracketizeCrumbIDs(crumbs),
@@ -363,7 +363,7 @@
             mismappings: success.mismappings,
             usage_examples: success.blurbs,
 
-            mappings: await custom_mappings.json()
+            mappings: await mappings.json()
         });
     });
 </script>
