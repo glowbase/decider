@@ -406,7 +406,7 @@ strong {
     padding: calc(var(--bs-card-cap-padding-y) * 0.4) calc(var(--bs-card-cap-padding-x) * 0.4);
 }
 .answer-card code {
-    color: rgb(110, 255, 110);
+    color: rgb(70 150 0);
 }
 .answer-card .stretched-link:hover::after,
 .answer-card .stretched-link:focus::after {

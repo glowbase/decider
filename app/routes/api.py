@@ -1,4 +1,6 @@
 import logging
+import json
+import os
 from app.models import CoOccurrence, Platform, db, Tactic, Technique, Mismapping, AttackVersion, DataSource
 from app.models import technique_platform_map, tactic_technique_map, tactic_ds_map, technique_ds_map
 from app.routes.auth import disabled_in_kiosk
@@ -41,6 +43,20 @@ def get_versions():
     logger.debug(f"got {len(version_strs)} versions installed: {', '.join(version_strs)}")
 
     return jsonify(version_strs), 200
+
+
+@api_.route("/api/mappings", methods=["GET"])
+@wrap_exceptions_as(ErrorDuringAJAXRoute)
+def get_mappings():
+    """Returns a list of custom mapping data stored in JSON file (JSON response)"""
+    g.route_title = "Get Custom Mappings"
+
+    logger.info("querying custom mappings")
+
+    with open('/opt/decider/config/build_sources/mappings/mapping-content-v15.1.json') as mappings_file:
+        mappings_data = json.load(mappings_file)
+
+    return jsonify(mappings_data), 200
 
 
 @api_.route("/api/mismappings", methods=["GET"])

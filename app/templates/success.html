@@ -150,44 +150,53 @@
         </ul>
     </section>
 
-    {# ISM #}
+    {# Remediations #}
     <section>
-        <h2 class="fs-3">ACSC ISM</h2>
+        <h2 class="fs-3">Remediation</h2>
 
+        {# ISM #}
+        <h3 class="fs-4">ISM</h3>
         <table class="table has-strong-codes has-strong-blue-links">
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th>ISM</th>
+                    <th>Code</th>
                 </tr>
             </thead>
-            <!-- <template x-for="(example, index) in $store.success.usage_examples" :key="example.appId">
+            <template x-for="(ism, index) in $store.success.mappings[$store.success.id].ism">
                 <tbody>
                     <tr :class="(index % 2 == 0) ? 'table-light' : ''">
-                        <td class="align-middle text-break" x-html="example.sentence" :rowspan="example.links.length"></td>
+                        <td class="align-middle text-break" x-html="ism.description"></td>
+                        <td class="align-middle text-break" x-html="ism.name"></td>
+                    </tr>
+                </tbody>
+            </template>
+        </table>
+
+        {# NIST #}
+        <h3 class="fs-4">NIST 800-53</h3>
+        <table class="table has-strong-codes has-strong-blue-links">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Code</th>
+                </tr>
+            </thead>
+            <template x-for="(nist, index) in $store.success.mappings[$store.success.id].nist">
+                <tbody>
+                    <tr :class="(index % 2 == 0) ? 'table-light' : ''">
+                        <td class="align-middle text-break" x-html="nist.description"></td>
                         <td class="align-middle text-break">
                             <a
-                                :href="resolveURL(example.links[0].url)"
+                                :href="resolveURL(nist.url)"
                                 target="_blank"
                                 rel="noreferrer noopener"
-                                x-text="example.links[0].name"
+                                x-text="nist.name"
                             ></a>
                         </td>
                     </tr>
-                    <template x-for="link in example.links.slice(1)" :key="link.appId">
-                        <tr :class="(index % 2 == 0) ? 'table-light' : ''">
-                            <td class="align-middle text-break">
-                                <a
-                                    :href="resolveURL(link.url)"
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    x-text="link.name"
-                                ></a>
-                            </td>
-                        </tr>
-                    </template>
                 </tbody>
-            </template> -->
+            </template>
         </table>
     </section>
 
@@ -317,7 +326,7 @@
 </div>
 
 <script>
-    document.addEventListener('alpine:init', function() {
+    document.addEventListener('alpine:init', async () => {
         const crumbs = {{ breadcrumbs | default([]) | tojson }};
         if (crumbs.length > 0) {
             crumbs[0]['name'] = 'Home';
@@ -332,6 +341,9 @@
                 link.appId = uuidv4();
             });
         });
+
+        const api_url = `${window.location.origin}/api/mappings`
+        const custom_mappings = await fetch(api_url)
 
         Alpine.store('success', {
             crumbs: bracketizeCrumbIDs(crumbs),
@@ -350,6 +362,8 @@
 
             mismappings: success.mismappings,
             usage_examples: success.blurbs,
+
+            mappings: await custom_mappings.json()
         });
     });
 </script>

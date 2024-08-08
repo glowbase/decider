@@ -233,27 +233,18 @@
                         <div class="answer-card card h-100">
                             <h3
                                 class="card-header fs-6"
-                                x-html="`${card.tech_name} [${card.tech_id}]`"
+                                x-html="`${card.tech_name} [<a class='top-link' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
                             ></h3>
 
                             <div class="card-body">
                                 <div class="card-text" x-html="card.description"></div>
                             </a>
 
-                            <div class="card-footer">
-                                <a
+                            <a
                                     class="link-strong-blue card-link stretched-link"
                                     :href="resolveURL(card.internal_url)"
                                     :aria-label="`Select Card ${card.tech_name_plain} ${card.tech_id_plain}`"
-                                ></a>
-                                <a
-                                    class="link-attack-orange card-link position-relative z-2"
-                                    :href="resolveURL(card.attack_url)"
-                                    :aria-label="`Attack Page for ${card.tech_name_plain} ${card.tech_id_plain}`"
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                >ATT&amp;CK Page</a>
-                            </div>
+                            ></a>
                         </div>
 
                     </div>
