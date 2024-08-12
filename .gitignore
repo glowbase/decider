@@ -31,6 +31,5 @@ UNKNOWN.egg-info/
 
 # Local working notes / tools
 /scratch/
-
-# Excel Spreadsheets
-.xlsx
+config/build_sources/mappings/mappings.xlsx
+*.xlsx

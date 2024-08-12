@@ -59,7 +59,7 @@ def get_mappings():
 
     logger.info("querying custom mappings")
 
-    path = "/opt/decider/config/build_sources/mappings"
+    path = "./config/build_sources/mappings"
 
     with open(f'{path}/mappings.json') as mappings_file:
         mappings_data = json.load(mappings_file)
