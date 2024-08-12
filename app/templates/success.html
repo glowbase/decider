@@ -167,7 +167,14 @@
                 <tbody>
                     <tr :class="(index % 2 == 0) ? 'table-light' : ''">
                         <td class="align-middle text-break" x-html="ism.description"></td>
-                        <td class="align-middle text-break" x-html="ism.name"></td>
+                        <td class="align-middle">
+                            <a
+                                :href="resolveURL(ism.url)"
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                x-text="ism.code"
+                            ></a>
+                        </td>
                     </tr>
                 </tbody>
             </template>
@@ -186,12 +193,38 @@
                 <tbody>
                     <tr :class="(index % 2 == 0) ? 'table-light' : ''">
                         <td class="align-middle text-break" x-html="nist.description"></td>
-                        <td class="align-middle text-break">
+                        <td class="align-middle">
                             <a
                                 :href="resolveURL(nist.url)"
                                 target="_blank"
                                 rel="noreferrer noopener"
-                                x-text="nist.name"
+                                x-text="nist.code"
+                            ></a>
+                        </td>
+                    </tr>
+                </tbody>
+            </template>
+        </table>
+
+        {# MITRE #}
+        <h3 class="fs-4">MITRE</h3>
+        <table class="table has-strong-codes has-strong-blue-links">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Code</th>
+                </tr>
+            </thead>
+            <template x-for="(mitre, index) in $store.success.mappings.remediation">
+                <tbody>
+                    <tr :class="(index % 2 == 0) ? 'table-light' : ''">
+                        <td class="align-middle text-break" x-html="mitre.description"></td>
+                        <td class="align-middle">
+                            <a
+                                :href="resolveURL(mitre.url)"
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                x-text="mitre.code"
                             ></a>
                         </td>
                     </tr>

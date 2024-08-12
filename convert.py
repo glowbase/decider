@@ -5,7 +5,7 @@ import re
 if __name__ == "__main__":
     path = "./config/build_sources/mappings"
 
-    # load spreadsheets
+    # load spreadsheet tables
     mapping_spreadsheet = pd.read_excel(
         f"{path}/mappings.xlsx",
         sheet_name="Blue Team Guide"
@@ -13,17 +13,32 @@ if __name__ == "__main__":
 
     ism_spreadsheet = pd.read_excel(
         f"{path}/mappings.xlsx",
-        sheet_name="ISM Controls (June 2024)"
+        sheet_name="ISM Controls"
+    )
+
+    nist_spreadsheet = pd.read_excel(
+        f"{path}/mappings.xlsx",
+        sheet_name="NIST Controls"
+    )
+    
+    mitre_spreadsheet = pd.read_excel(
+        f"{path}/mappings.xlsx",
+        sheet_name="MITRE Controls"
     )
 
     # globals
     mapping_data = json.loads(mapping_spreadsheet.to_json())
     ism_data = json.loads(ism_spreadsheet.to_json())
+    nist_data = json.loads(nist_spreadsheet.to_json())
+    mitre_data = json.loads(mitre_spreadsheet.to_json())
 
     columns = []
     table = {}
     output = {}
-    controls = {}
+    
+    ism_list = {}
+    nist_list = {}
+    mitre_list = {}
 
     # create ism mappings dictionary
     for column in ism_data:
@@ -32,10 +47,41 @@ if __name__ == "__main__":
             control = ism_data["Identifier"][str(index)]
             section = ism_data["Section"][str(index)]
 
-            controls[control] = {}
-            controls[control]["description"] = description
-            controls[control]["section"] = section
-            controls[control]["code"] = control
+            ism_list[control] = {}
+            ism_list[control]["description"] = description
+            ism_list[control]["section"] = section
+            ism_list[control]["code"] = control
+            ism_list[control]["url"] = f"https://ismcontrol.xyz/{control.split('-')[1]}"
+
+    # create nist mapping dictionary
+    for column in nist_data:
+        for index, row in enumerate(nist_data[column].values()):
+            control = nist_data["Control Identifier"][str(index)]
+            description = nist_data["Control (or Control Enhancement)"][str(index)]
+            section = nist_data["Control (or Control Enhancement) Name"][str(index)]
+
+            # the nist control doesn't have a 0 prefix
+            if len(re.findall(r"[A-Z]{2}-[0-9]{1,2}", control)[0].split("-")[1]) == 1:
+                control = f"{control[:3]}0{control[3:]}"
+
+            nist_list[control] = {}
+            nist_list[control]["code"] = control
+            nist_list[control]["description"] = description
+            nist_list[control]["section"] = section
+            nist_list[control]["url"] = f"https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element={control}"
+
+    # create mitre mapping dictionary
+    for column in mitre_data:
+        for index, row in enumerate(mitre_data[column].values()):
+            control = mitre_data["ID"][str(index)]
+            description = mitre_data["Description"][str(index)]
+            section = mitre_data["Name"][str(index)]
+
+            mitre_list[control] = {}
+            mitre_list[control]["code"] = control
+            mitre_list[control]["description"] = description
+            mitre_list[control]["section"] = section
+            mitre_list[control]["url"] = f"https://attack.mitre.org/mitigations/{control}"
 
     # for each column in spreadsheet
     for ch in mapping_data.keys():
@@ -99,7 +145,7 @@ if __name__ == "__main__":
 
             # ism
             if column_header == "ism":
-                value = re.findall(r".*?ISM - ([0-9]{4})", str(row))
+                value = re.findall(r"ISM-([0-9]{4})", str(row))
                 table[column_header].append(value)
         
             # nist
@@ -125,7 +171,17 @@ if __name__ == "__main__":
                         for ism_control in ism_controls:
                             ism_control = f"ISM-{ism_control}"
 
-                            output[technique][column].append(controls[ism_control])
+                            output[technique][column].append(ism_list[ism_control])
+                    elif column == "nist":
+                        nist_controls = table[column][index]
+
+                        for nist_control in nist_controls:
+                            output[technique][column].append(nist_list[nist_control])
+                    elif column == "remediation":
+                        mitre_controls = table[column][index]
+
+                        for mitre_control in mitre_controls:
+                            output[technique][column].append(mitre_list[mitre_control])
                     else:
                         output[technique][column] = table[column][index]
     
