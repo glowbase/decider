@@ -31,3 +31,6 @@ UNKNOWN.egg-info/
 
 # Local working notes / tools
 /scratch/
+
+# Excel Spreadsheets
+.xlsx
