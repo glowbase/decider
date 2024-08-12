@@ -372,6 +372,8 @@ def error_handlers(app):
     def internal_server_error(ex):
         return render_template("status_codes/500.html"), 500
 
+# def convert_mappings():
+
 
 def create_app(config):
     logger.debug("Creating the App.")

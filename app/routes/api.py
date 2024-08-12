@@ -59,9 +59,11 @@ def get_mappings():
 
     logger.info("querying custom mappings")
 
-    with open('/opt/decider/config/build_sources/mappings/mapping-content-v15.1.json') as mappings_file:
-        mappings_data = json.load(mappings_file)
+    path = "/opt/decider/config/build_sources/mappings"
 
+    with open(f'{path}/mappings.json') as mappings_file:
+        mappings_data = json.load(mappings_file)
+        
     return_value = mappings_data[technique] if technique in mappings_data else []
 
     return jsonify(return_value), 200
