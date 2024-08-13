@@ -24,6 +24,8 @@ from sqlalchemy import asc, func, distinct, and_, or_, literal_column
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.orm.util import aliased
 
+from app.domain.mitigations_service import MitigationsService
+
 logger = logging.getLogger(__name__)
 
 api_ = Blueprint("api_", __name__)
@@ -47,41 +49,16 @@ def get_versions():
 @api_.route("/api/mappings", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringAJAXRoute)
 def get_mappings():
-    """Returns a list of strings of ATT&CK versions installed on the server (JSON response)"""
-    g.route_title = "Get ATT&CK Versions Installed"
-
-    logger.info("querying versions")
-
-    version_objs = db.session.query(AttackVersion).all()
-    version_strs = [v.version for v in version_objs]
-
-    logger.debug(f"got {len(version_strs)} versions installed: {', '.join(version_strs)}")
-
-    return jsonify(version_strs), 200
-
-# @api_.route("/api/mappings", methods=["GET"])
-# @wrap_exceptions_as(ErrorDuringAJAXRoute)
-# def get_mappings():
-#     """Returns a list of custom mapping data stored in JSON file (JSON response)"""
-#     g.route_title = "Get Custom Mappings"
-
-#     technique = request.args.get("technique")
-
-#     if (technique is None):
-#         logger.error("request failed - technique field missing")
-#         return jsonify(message="'technique' field missing"), 400
-
-#     logger.info("querying custom mappings")
-
-#     path = "./config/build_sources/mappings"
-
-#     with open(f'{path}/mappings.json') as mappings_file:
-#         mappings_data = json.load(mappings_file)
-        
-#     return_value = mappings_data[technique] if technique in mappings_data else []
-
-#     return jsonify(return_value), 200
-
+    """Returns a list of custom mapping data stored in JSON file (JSON response)"""
+    g.route_title = "Get Custom Mappings"
+    technique = request.args.get("technique")
+    if (technique is None):
+        logger.error("request failed - technique field missing")
+        return jsonify(message="'technique' field missing"), 400
+    logger.info("querying custom mappings")
+    ms = MitigationsService()
+    return_value = ms.get_mitigations(technique)
+    return jsonify(return_value), 200
 
 @api_.route("/api/mismappings", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringAJAXRoute)
