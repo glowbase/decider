@@ -22,7 +22,7 @@ mitigations_ = Blueprint("mitigations_", __name__)
 @mitigations_.route("/api/mappings", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringAJAXRoute)
 def get_mappings():
-    get_mitigations()
+    return get_mitigations()
 
 @mitigations_.route("/api/mitigations", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringAJAXRoute)
