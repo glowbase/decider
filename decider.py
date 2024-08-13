@@ -28,6 +28,7 @@ from app.routes.edit import edit_
 from app.routes.docs import docs_
 from app.routes.admin import admin_
 from app.routes.api import api_
+from app.routes.mitigations import mitigations_
 from app.routes.misc import misc_
 
 from app.utils.db.util import get_config_option_map
@@ -151,6 +152,7 @@ def register_blueprints(app):
     app.register_blueprint(admin_)
     app.register_blueprint(misc_)
     app.register_blueprint(api_)
+    app.register_blueprint(mitigations_)
 
 
 def kiosk_mode(app):
