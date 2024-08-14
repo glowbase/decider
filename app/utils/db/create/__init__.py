@@ -1,4 +1,4 @@
-from . import akas, attack, cart, coocs, mismaps, role, user, util
+from . import akas, attack, cart, coocs, mismaps, role, user, util, mitigation
 
 from textwrap import dedent as txt_dedent
 from sqlalchemy.sql import text as sql_text, quoted_name as sql_quoted_name
