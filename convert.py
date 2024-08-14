@@ -1,28 +1,28 @@
 import pandas as pd
+import os
 import json
 import re
+import app.constants as constants
 
 if __name__ == "__main__":
-    path = "./config/build_sources/mappings"
-
     # load spreadsheet tables
     mapping_spreadsheet = pd.read_excel(
-        f"{path}/mappings.xlsx",
+        f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)}/mappings.xlsx",
         sheet_name="Blue Team Guide"
     )
 
     ism_spreadsheet = pd.read_excel(
-        f"{path}/mappings.xlsx",
+        f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)}/mappings.xlsx",
         sheet_name="ISM Controls"
     )
 
     nist_spreadsheet = pd.read_excel(
-        f"{path}/mappings.xlsx",
+        f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)}/mappings.xlsx",
         sheet_name="NIST Controls"
     )
     
     mitre_spreadsheet = pd.read_excel(
-        f"{path}/mappings.xlsx",
+        f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)}/mappings.xlsx",
         sheet_name="MITRE Controls"
     )
 
@@ -51,6 +51,7 @@ if __name__ == "__main__":
             ism_list[control]["description"] = description
             ism_list[control]["section"] = section
             ism_list[control]["code"] = control
+            #### URL NEEDS TO BE PART OF THE RENDER TEMPLATE
             ism_list[control]["url"] = f"https://ismcontrol.xyz/{control.split('-')[1]}"
 
     # create nist mapping dictionary
@@ -65,9 +66,10 @@ if __name__ == "__main__":
                 control = f"{control[:3]}0{control[3:]}"
 
             nist_list[control] = {}
-            nist_list[control]["code"] = control
             nist_list[control]["description"] = description
             nist_list[control]["section"] = section
+            nist_list[control]["code"] = control
+            #### URL NEEDS TO BE PART OF THE RENDER TEMPLATE
             nist_list[control]["url"] = f"https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element={control}"
 
     # create mitre mapping dictionary
@@ -78,9 +80,10 @@ if __name__ == "__main__":
             section = mitre_data["Name"][str(index)]
 
             mitre_list[control] = {}
-            mitre_list[control]["code"] = control
             mitre_list[control]["description"] = description
             mitre_list[control]["section"] = section
+            mitre_list[control]["code"] = control
+            #### URL NEEDS TO BE PART OF THE RENDER TEMPLATE
             mitre_list[control]["url"] = f"https://attack.mitre.org/mitigations/{control}"
 
     # for each column in spreadsheet
@@ -160,6 +163,7 @@ if __name__ == "__main__":
         if not re.match(r"TA[0-9]{4}", technique):
             # create a new dictionary for each technique
             output[technique] = {}
+            output[technique]["version"] = "v15.1"
             
             for column in columns:
                 if not column == "artefacts":
@@ -189,5 +193,5 @@ if __name__ == "__main__":
     json_object = json.dumps(output, indent=4)
     
     # write to file
-    with open(f"{path}/mappings.json", "w") as outfile:
+    with open(f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir, constants.mitigations_mapping_file_base)}-v15.1.json", "w") as outfile:
         outfile.write(json_object)

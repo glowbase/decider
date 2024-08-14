@@ -110,6 +110,28 @@ class AttackFile(SourceFile):
 
         self.data = active_secondary
 
+class MitigationFile(SourceFile):
+    def validate(self):
+        # base object is dictionary
+        if not isinstance(self.data, dict):
+            raise Exception("The root of this file isn't a dictionary as expected.")
+
+        # check entries
+        for ind, (key, value) in enumerate(self.data.items()):
+
+            # keys are Mitigation IDs
+            if not isinstance(key, str):
+                raise Exception(f"The key ({key}) for entry #{ind} is not a string as expected.")
+            if not re.fullmatch(r"T[0-9]{4}(\.[0-9]{3})?", key):
+                raise Exception(f"The key ({key}) for entry #{ind} is not a Mitigation ID as expected.")
+
+            # values are dictionaries with required keys
+            if not isinstance(value, dict):
+                raise Exception(f"The value at key ({key}) is not a dictionary as expected.")
+
+            expected_keys = {"technique", "module", "evidence", "tools", "remediation", "ism", "nist"}
+            if not expected_keys.issubset(value.keys()):
+                raise Exception(f"The entry at key ({key}) does not have all required keys: {expected_keys}.")
 
 class TreeFile(SourceFile):
     def validate(self):
@@ -296,3 +318,4 @@ class SourceManager:
         self.co_ocs = self.multiversion_as_dict(CoOccurrencesFile, os.path.join(sources_dir, "./co_occurrences/"))
         self.mismaps = self.multiversion_as_dict(MismappingsFile, os.path.join(sources_dir, "./mismappings/"))
         self.akas = self.multiversion_as_dict(AkasFile, os.path.join(sources_dir, "./akas/"))
+        self.mitigations = self.multiversion_as_dict(MitigationFile, os.path.join(sources_dir, "./mappings/"))

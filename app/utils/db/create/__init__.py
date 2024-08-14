@@ -1,4 +1,4 @@
-from . import akas, attack, cart, coocs, mismaps, role, user, util
+from . import akas, attack, cart, coocs, mismaps, role, user, util, mitigation
 
 from textwrap import dedent as txt_dedent
 from sqlalchemy.sql import text as sql_text, quoted_name as sql_quoted_name
@@ -81,6 +81,8 @@ def kiosk_user():
         GRANT SELECT ON co_occurrence TO {db_kiosk_name};
         GRANT SELECT ON data_source TO {db_kiosk_name};
         GRANT SELECT ON data_component TO {db_kiosk_name};
+        GRANT SELECT ON mitigation TO {db_kiosk_name};
+        GRANT SELECT ON technique_mitigation_map TO {db_kiosk_name};
         """
     )
     query = query.format(

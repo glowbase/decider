@@ -1,7 +1,12 @@
+### To run from command line
+# <python> -m app.utils.db.actions.full_build --config DefaultConfig --test
+
 from flask import Flask
 
 from app.models import db
 from sqlalchemy import inspect
+
+import traceback
 
 from app.utils.db.source_loader import SourceManager
 import app.utils.db.create as db_create
@@ -10,6 +15,16 @@ import app.utils.db.read as db_read
 from app.utils.db.util import app_config_selector
 
 from app.constants import BUILD_SOURCES_DIR
+
+
+from app.env_vars import (
+    DB_PORT,
+    DB_DATABASE,
+    DB_ADMIN_NAME,
+    DB_ADMIN_PASS,
+)
+
+import sqlalchemy as sqlalch
 
 import argparse
 import os
@@ -24,6 +39,7 @@ def main():
     # optional avenue of command-line instead of text-ui
     parser = argparse.ArgumentParser("Builds the DB with all content from the local disk JSONs.")
     parser.add_argument("--config", help="The database configuration to use (from app/conf.py).")
+    parser.add_argument("--test", help="Run in test mode for importing Att&ck and Mitigation data. Ignores users and roles.", action="store_true")
     args = parser.parse_args()
 
     # perform config selection, can fail on bad cmdline pick
@@ -32,6 +48,19 @@ def main():
     except Exception as ex:
         print(f"Invalid command-line selection made:\n{ex}")
         sys.exit(1)
+
+    if args.test:
+        print("Running in test mode. Overriding database to be localhost. Ensure database is availabe on 127.0.0.1:5432.\n")
+        print("You may have to add a binding to your docker-compose.yml file to expose the database to the host machine.\n")
+
+        app_config.SQLALCHEMY_DATABASE_URI = sqlalch.engine.URL.create(
+        drivername="postgresql",
+        username=DB_ADMIN_NAME,
+        password=DB_ADMIN_PASS,
+        host="localhost",
+        port=DB_PORT,
+        database=DB_DATABASE,
+    )
 
     print("\n------------------------------------------------\n")
 
@@ -78,28 +107,31 @@ def main():
 
         print("Loading sources..")
 
-        print("\n------------------------------------------------\n")
-        # Role - required
-
-        if src_mgr.role.load_validate():
-            print("Role loaded.")
+        if args.test:
+            print("Running in test mode. Skipping user and role loading.")
         else:
-            print("Role is needed for Decider to function. Exiting.")
-            sys.exit(2)
+            print("\n------------------------------------------------\n")
+            # Role - required
 
-        print("\n------------------------------------------------\n")
-        # User - required
+            if src_mgr.role.load_validate():
+                print("Role loaded.")
+            else:
+                print("Role is needed for Decider to function. Exiting.")
+                sys.exit(2)
 
-        if not src_mgr.user.load_validate():
-            print("User is needed for Decider to function. Exiting.")
-            sys.exit(3)
-        elif len(src_mgr.user.get_data()) == 0:
-            print("At least one user must be defined in the user.json file. Exiting.")
-            sys.exit(4)
-        else:
-            print("User loaded.")
+            print("\n------------------------------------------------\n")
+            # User - required
 
-        print("\n------------------------------------------------\n")
+            if not src_mgr.user.load_validate():
+                print("User is needed for Decider to function. Exiting.")
+                sys.exit(3)
+            elif len(src_mgr.user.get_data()) == 0:
+                print("At least one user must be defined in the user.json file. Exiting.")
+                sys.exit(4)
+            else:
+                print("User loaded.")
+
+            print("\n------------------------------------------------\n")
         # ATT&CK content - 1+ required
 
         attack_versions = {v for v in src_mgr.attack.keys() if src_mgr.attack[v].load_validate()}
@@ -173,6 +205,19 @@ def main():
         else:
             print("Mismappings will not be installed for any versions.")
 
+        # Mitigation Mappings
+        mitigations_versions = {
+            v
+            for v in set(install_versions).intersection(
+                set(src_mgr.mitigations.keys())
+            )  # only try and load Mismaps for versions to install
+            if src_mgr.mitigations[v].load_validate()  # ensure load passes
+        }
+        if len(mitigations_versions) != 0:
+            print(f"Loaded and will install Mitigations for versions: {mismap_versions}")
+        else:
+            print("Mitigations will not be installed for any versions.")
+
         print("\n------------------------------------------------\n")
         # Carts - optional and across all versions
 
@@ -218,13 +263,14 @@ def main():
             sys.exit(7)
 
         # add Roles and Users
-        try:
-            db_create.role.add_all(src_mgr)
-            db_create.user.add_all(src_mgr)
-        except Exception as ex:
-            tfail = time.time() - t0
-            print(f"Failed to add Roles and Users at {tfail:.1f}s into build - due to:\n{ex}")
-            sys.exit(8)
+        if not args.test:
+            try:
+                db_create.role.add_all(src_mgr)
+                db_create.user.add_all(src_mgr)
+            except Exception as ex:
+                tfail = time.time() - t0
+                print(f"Failed to add Roles and Users at {tfail:.1f}s into build - due to:\n{ex}")
+                sys.exit(8)
 
         for version in install_versions:
             print(f"\nAdding ATT&CK content for version {version}\n")
@@ -270,6 +316,18 @@ def main():
                     print(
                         f"Failed to add ATT&CK/Tree content for version {version}"
                         f" at {tfail:.1f}s into build - due to:\n{ex}"
+                    )
+                    sys.exit(12)
+
+            # Migitation Mappings
+            if version in mitigations_versions:
+                try:
+                    db_create.mitigation.add_version(version, src_mgr)
+                except Exception as ex:
+                    tfail = time.time() - t0
+                    print(
+                        f"Failed to add ATT&CK Mitigations content for version {version}"
+                        f" at {tfail:.1f}s into build - due to:\n{traceback.format_exception(ex) }"
                     )
                     sys.exit(12)
 

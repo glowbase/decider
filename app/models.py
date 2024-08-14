@@ -64,6 +64,11 @@ technique_dc_map = db.Table(
     ),
 )
 
+technique_mitigation_map = db.Table(
+    "technique_mitigation_map",
+    db.Column("technique", db.Integer, db.ForeignKey("technique.uid"), primary_key=True),
+    db.Column("mitigation", db.Integer, db.ForeignKey("mitigation.uid"), primary_key=True),
+)
 
 class AttackVersion(db.Model):
     version = db.Column(db.Text, primary_key=True)
@@ -205,3 +210,12 @@ class DataComponent(db.Model):
     parent_ds_id = db.Column(db.Text, nullable=False)
     internal_name = db.Column(db.Text, nullable=False)
     readable_name = db.Column(db.Text, nullable=False)
+
+class Mitigation(db.Model):
+    uid = db.Column(db.Integer, primary_key=True)
+    attack_version = db.Column(db.Text, db.ForeignKey("attack_version.version"), nullable=False)
+    mit_id= db.Column(db.Text, nullable=False)
+    section= db.Column(db.Text, nullable=False)
+    url= db.Column(db.Text, nullable=False)
+    source= db.Column(db.Text, nullable=False)
+    description = db.Column(db.Text, nullable=False)
