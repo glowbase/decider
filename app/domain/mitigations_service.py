@@ -6,6 +6,7 @@ from flask_login import current_user
 from sqlalchemy import asc, func, distinct, and_, or_, literal_column
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.orm.util import aliased
+from app.utils.db.read import mitigation
 
 class MitigationsService(object):
   def __new__(cls):
@@ -14,8 +15,4 @@ class MitigationsService(object):
     return cls.instance
   
   def get_mitigations(self, technique, attack_version):
-    with open(f'{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir, constants.mitigations_mapping_file_base)}-{attack_version}.json') as mappings_file:
-        mappings_data = json.load(mappings_file)
-      
-    return_value = mappings_data[technique] if technique in mappings_data else []
-    return return_value
+    return mitigation.mit_for_tech_id(attack_version, technique)
