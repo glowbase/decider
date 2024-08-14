@@ -217,4 +217,5 @@ class Mitigation(db.Model):
     mit_id= db.Column(db.Text, nullable=False)
     section= db.Column(db.Text, nullable=False)
     url= db.Column(db.Text, nullable=False)
+    source= db.Column(db.Text, nullable=False)
     description = db.Column(db.Text, nullable=False)

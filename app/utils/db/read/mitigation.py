@@ -26,7 +26,8 @@ def mit_for_tech_id(version, tech_id):
             "mit_id": m.mit_id,
             "section": m.section,
             "url": m.url,
-            "description": m.description
+            "description": m.description,
+            "source": m.source,
         }
         for m in mitigations
     ]

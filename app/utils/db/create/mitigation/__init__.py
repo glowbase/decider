@@ -48,6 +48,7 @@ def mitigations_table(version, src_mgr):
                         "section"     : mtg["section"],
                         "description" : mtg["description"],
                         "url"         : mtg["url"],
+                        "source"      : ms
                         # fmt: on
                     }
                 )
@@ -70,7 +71,9 @@ def tech_mitigations_map(version, src_mgr):
         # fmt: off
         i
         for i in mitigations.values()
-        if len(i["ism"]) > 0
+        if len(i["ism"]) > 0 or
+            len(i["remediation"]) > 0 or
+            len(i["nist"]) > 0
         # fmt: on
     ]
 
