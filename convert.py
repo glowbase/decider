@@ -138,8 +138,8 @@ if __name__ == "__main__":
                 value = str(row).split()
                 table[column_header].append(value)
 
-            # remediation
-            if column_header == "remediation":
+            # mitigation
+            if column_header == "mitigation":
                 value = re.findall(r"\.*?\((M[0-9]{4})\)", str(row))
                 table[column_header].append(value)
 
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
                         for nist_control in nist_controls:
                             output[technique][column].append(nist_list[nist_control])
-                    elif column == "remediation":
+                    elif column == "mitigation":
                         mitre_controls = table[column][index]
 
                         for mitre_control in mitre_controls:
