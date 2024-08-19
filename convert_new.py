@@ -19,47 +19,60 @@ if __name__ == "__main__":
     uses = {}
 
     # mitre control uses
-    current_mitigation = ""
-    current_technique = ""
+    overarching_mitigation = ""
+    overarching_technique = ""
 
-    for i, rows in enumerate(uses_sheet.iter_rows()):
-        if i == 0: continue
+    for row_i, row in enumerate(uses_sheet.iter_rows()):
+        if row_i == 1: continue
+
+        technique = ""
+        values = {}
 
         # 0: id, 1: sub-technique, 3: use
-        for i, row in enumerate(rows):
-            row = str(row.value)
+        for i, col in enumerate(row):
+            col = str(col.value)
 
             if i == 0:
-                mitigation = re.findall(r".*?\((M[0-9]{4})\)", row)
-                technique = re.findall(r"(T[0-9]{4})", row)
+                mitigation = re.findall(r".*?\((M[0-9]{4})\)", col)
+                technique = re.findall(r"(T[0-9]{4})", col)
 
-                if len(technique) != 0: current_technique = technique[0]
-                if len(mitigation) != 0: current_mitigation = mitigation[0]
-            if i == 1:
-                tech = current_technique
+                if len(technique) != 0: overarching_technique = technique[0]
+                if len(mitigation) != 0: overarching_mitigation = mitigation[0]
+            if i == 1 and row_i != 0:
+                technique = overarching_technique
 
-                if row != "None":
-                    tech = f"{current_technique}.{row.split('.')[1]}"
+                if col != "None":
+                    technique = f"{overarching_technique}.{col.split('.')[1]}"
+            if i == 3 and row_i != 0:
+                values[technique] = { "use": col }
 
-                print(tech)
+                if not overarching_mitigation in uses:
+                    uses[overarching_mitigation] = []
+                
+                uses[overarching_mitigation].append(values)
+    
 
     # mitre controls
     for i, rows in enumerate(mitre_sheet.iter_rows()):
         if i == 0: continue
 
-        values = { "source": "MITRE", "techniques": [] }
+        values = { "source": "MITRE" }
 
         # 0: id, 1: name, 2: description
         for i, row in enumerate(rows):
             if i == 1: values["name"] = row.value
             if i == 2: values["description"] = row.value
-            if i == 0: mitigations[row.value] = values
+            if i == 0: 
+                mitigations[row.value] = values
+                
+                if row.value in uses:
+                    mitigations[row.value]["techniques"] = uses[row.value]
 
     # nist controls
     for i, rows in enumerate(nist_sheet.iter_rows()):
         if i == 0: continue
 
-        values = { "source": "NIST", "techniques": [] }
+        values = { "source": "NIST" }
 
         # 0: id, 1: name, 2: description
         for i, row in enumerate(rows):
@@ -75,7 +88,7 @@ if __name__ == "__main__":
     for i, rows in enumerate(ism_sheet.iter_rows()):
         if i == 0: continue
 
-        values = { "source": "ISM", "techniques": [] }
+        values = { "source": "ISM" }
 
         # 1: name, 3: id, 6: description
         for i, row in enumerate(rows):
@@ -83,5 +96,5 @@ if __name__ == "__main__":
             if i == 6: values["description"] = row.value
             if i == 3: mitigations[row.value] = values
 
-    with open(f"{path}/mappings.json", "w") as outfile: 
+    with open(f"{path}/mappings-v15.1.json", "w") as outfile: 
         json.dump(mitigations, outfile)
