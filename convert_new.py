@@ -10,13 +10,15 @@ if __name__ == "__main__":
 
     workbook = load_workbook(file)
     
-    uses_sheet = workbook["ATT&CK Mitigations v15"]
+    main_sheet = workbook["Blue Team Guide"]
+    uses_sheet = workbook["MITRE Uses"]
     mitre_sheet = workbook["MITRE Controls"]
     nist_sheet = workbook["NIST Controls"]
     ism_sheet = workbook["ISM Controls"]
 
     mitigations = {}
     uses = {}
+    isms = {}
 
     # mitre control uses
     overarching_mitigation = ""
@@ -43,20 +45,52 @@ if __name__ == "__main__":
 
                 if col != "None":
                     technique = f"{overarching_technique}.{col.split('.')[1]}"
-            if i == 3 and row_i != 0:
+            if i == 3 and row_i != 0 and col != "None" and col != "Use":
                 values[technique] = { "use": col }
 
                 if not overarching_mitigation in uses:
                     uses[overarching_mitigation] = []
                 
                 uses[overarching_mitigation].append(values)
-    
+
+    # main sheet with all information
+    overarching_technique = ""
+
+    for row_i, row in enumerate(main_sheet.iter_rows()):
+        if row_i == 0: continue
+
+        full_technique = ""
+        ism_controls = []
+
+        for i, col in enumerate(row):
+            col = str(col.value)
+
+            if i == 0:
+                technique = re.findall(r".*\((T[0-9]{4})\)", col)
+                subtechnique = re.findall(r".*\((\.[0-9]{3})\)", col)
+
+                if len(technique) != 0:
+                    full_technique = technique[0]
+                    overarching_technique = technique[0]
+
+                if len(subtechnique) != 0:
+                    full_technique = overarching_technique + subtechnique[0]
+            if i == 6:
+                ism_controls = re.findall(r"ISM-[0-9]{4}", col)
+
+                for ism in ism_controls:
+                    if not ism in isms:
+                        isms[ism] = []
+                        isms[ism].append(full_technique)
+
+    with open(f"{path}/isms.json", "w") as outfile: 
+        json.dump(isms, outfile)
 
     # mitre controls
     for i, rows in enumerate(mitre_sheet.iter_rows()):
         if i == 0: continue
 
-        values = { "source": "MITRE" }
+        values = { "source": "MITRE", "techniques": [] }
 
         # 0: id, 1: name, 2: description
         for i, row in enumerate(rows):
@@ -72,7 +106,7 @@ if __name__ == "__main__":
     for i, rows in enumerate(nist_sheet.iter_rows()):
         if i == 0: continue
 
-        values = { "source": "NIST" }
+        values = { "source": "NIST", "techniques": [] }
 
         # 0: id, 1: name, 2: description
         for i, row in enumerate(rows):
@@ -88,13 +122,13 @@ if __name__ == "__main__":
     for i, rows in enumerate(ism_sheet.iter_rows()):
         if i == 0: continue
 
-        values = { "source": "ISM" }
+        values = { "source": "ISM", "techniques": [] }
 
-        # 1: name, 3: id, 6: description
+        # 0: id, 1: name, 2: description
         for i, row in enumerate(rows):
             if i == 1: values["name"] = row.value
-            if i == 6: values["description"] = row.value
-            if i == 3: mitigations[row.value] = values
+            if i == 2: values["description"] = row.value
+            if i == 0: mitigations[row.value] = values
 
     with open(f"{path}/mappings-v15.1.json", "w") as outfile: 
         json.dump(mitigations, outfile)
