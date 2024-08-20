@@ -44,12 +44,10 @@ if __name__ == "__main__":
                 if col != "None":
                     technique = f"{overarching_technique}.{col.split('.')[1]}"
             if i == 3 and row_i != 0:
-                values[technique] = { "use": col }
-
                 if not overarching_mitigation in uses:
-                    uses[overarching_mitigation] = []
+                    uses[overarching_mitigation] = {}
                 
-                uses[overarching_mitigation].append(values)
+                uses[overarching_mitigation][technique] = { "use": col }
     
 
     # mitre controls
