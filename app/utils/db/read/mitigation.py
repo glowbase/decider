@@ -24,8 +24,6 @@ def mit_for_tech_id(version, tech_id):
             "uid": m.uid,
             "attack_version": m.attack_version,
             "mit_id": m.mit_id,
-            "section": m.section,
-            "url": m.url,
             "description": m.description,
             "source": m.source,
         }
