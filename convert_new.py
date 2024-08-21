@@ -49,7 +49,7 @@ if __name__ == "__main__":
                 values[technique] = { "use": col }
 
                 if not overarching_mitigation in uses:
-                    uses[overarching_mitigation] = []
+                    uses[overarching_mitigation] = {}
                 
                 uses[overarching_mitigation].append(values)
 

@@ -64,12 +64,6 @@ technique_dc_map = db.Table(
     ),
 )
 
-technique_mitigation_map = db.Table(
-    "technique_mitigation_map",
-    db.Column("technique", db.Integer, db.ForeignKey("technique.uid"), primary_key=True),
-    db.Column("mitigation", db.Integer, db.ForeignKey("mitigation.uid"), primary_key=True),
-)
-
 class AttackVersion(db.Model):
     version = db.Column(db.Text, primary_key=True)
     platforms = relationship(
@@ -211,11 +205,19 @@ class DataComponent(db.Model):
     internal_name = db.Column(db.Text, nullable=False)
     readable_name = db.Column(db.Text, nullable=False)
 
+# Mitigation Mapping Tables
+
 class Mitigation(db.Model):
     uid = db.Column(db.Integer, primary_key=True)
     attack_version = db.Column(db.Text, db.ForeignKey("attack_version.version"), nullable=False)
     mit_id= db.Column(db.Text, nullable=False)
-    section= db.Column(db.Text, nullable=False)
-    url= db.Column(db.Text, nullable=False)
     source= db.Column(db.Text, nullable=False)
-    description = db.Column(db.Text, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+    
+technique_mitigation_map = db.Table(
+    "technique_mitigation_map",
+    db.Column("technique", db.Integer, db.ForeignKey("technique.uid"), primary_key=True),
+    db.Column("mitigation", db.Integer, db.ForeignKey("mitigation.uid"), primary_key=True),
+    db.Column("use", db.Text, nullable=False),
+)

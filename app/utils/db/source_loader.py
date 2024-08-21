@@ -122,14 +122,14 @@ class MitigationFile(SourceFile):
             # keys are Mitigation IDs
             if not isinstance(key, str):
                 raise Exception(f"The key ({key}) for entry #{ind} is not a string as expected.")
-            if not re.fullmatch(r"T[0-9]{4}(\.[0-9]{3})?", key):
+            if not re.fullmatch(r"(M[0-9]{4}|ISM-[0-9]{3,4}|[A-Z]{2}-[0-9]{1,3})", key):
                 raise Exception(f"The key ({key}) for entry #{ind} is not a Mitigation ID as expected.")
 
             # values are dictionaries with required keys
             if not isinstance(value, dict):
                 raise Exception(f"The value at key ({key}) is not a dictionary as expected.")
 
-            expected_keys = {"technique", "module", "evidence", "tools", "remediation", "ism", "nist"}
+            expected_keys = {"source", "name", "description"}
             if not expected_keys.issubset(value.keys()):
                 raise Exception(f"The entry at key ({key}) does not have all required keys: {expected_keys}.")
 
