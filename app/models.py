@@ -209,6 +209,7 @@ class DataComponent(db.Model):
 
 class Mitigation(db.Model):
     uid = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text)
     attack_version = db.Column(db.Text, db.ForeignKey("attack_version.version"), nullable=False)
     mit_id= db.Column(db.Text, nullable=False)
     source= db.Column(db.Text, nullable=False)
