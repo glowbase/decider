@@ -25,11 +25,13 @@ from app.models import (
     Aka,
     Mismapping,
     Blurb,
+    Mitigation,
 )
 from app.models import (
     technique_aka_map,
     technique_platform_map,
     tactic_technique_map,
+    technique_mitigation_map,
 )
 from sqlalchemy import asc, func, distinct
 from sqlalchemy.orm import aliased
@@ -378,12 +380,13 @@ def success_page_vars(index, tactic_context, version_context):
 
     # get tactics, platforms, and akas for the current technique
     logger.debug(f"querying Tactics, Platforms, and AKAs of {index} ({version_context})")
-    _, tact_ids_names, platforms, akas = (
+    _, tact_ids_names, platforms, akas, mitigations = (
         db.session.query(
             Technique,  # 0
             func.array_agg(distinct(array([Tactic.tact_id, Tactic.tact_name]))),  # 1
             func.array_agg(distinct(Platform.readable_name)),  # 2
             func.array_remove(func.array_agg(distinct(Aka.term)), None),  # 3
+            func.array_agg(distinct(array([Mitigation.mit_id, Mitigation.source, Mitigation.name, Mitigation.description, technique_mitigation_map.c.use]))),  # 4
         )
         .filter(
             and_(
@@ -397,9 +400,11 @@ def success_page_vars(index, tactic_context, version_context):
         .outerjoin(Platform, Platform.uid == technique_platform_map.c.platform)
         .outerjoin(technique_aka_map, technique_aka_map.c.technique == Technique.uid)
         .outerjoin(Aka, technique_aka_map.c.aka == Aka.uid)
+        .outerjoin(technique_mitigation_map, technique_mitigation_map.c.technique == Technique.uid)
+        .outerjoin(Mitigation, Mitigation.uid == technique_mitigation_map.c.mitigation)
         .group_by(Technique.uid)
     ).first()
-    logger.debug(f"got {len(tact_ids_names)} Tactics, {len(platforms)} Platforms, and {len(akas)} AKAs")
+    logger.debug(f"got {len(tact_ids_names)} Tactics, {len(platforms)} Platforms, {len(akas)} AKAs, and {len(mitigations)} Mitigations")
 
     # generate dropdown options for tactic selector
     #   this allows selecting which tactic the technique gets added to the cart under
@@ -411,6 +416,20 @@ def success_page_vars(index, tactic_context, version_context):
         }
         for tact_id, tact_name in tact_ids_names
     ]
+
+    mitigation_entries = {}
+    for mit_id, source, name, description, use in mitigations:
+        if source not in mitigation_entries:
+            mitigation_entries[source] = []
+        
+        mitigation_entries[source].append(
+            {
+                "mit_id": mit_id,
+                "name": name,
+                "description": description,
+                "use": use,
+            }
+        )
 
     # create jinja vars
     return {
@@ -426,6 +445,7 @@ def success_page_vars(index, tactic_context, version_context):
             "mismappings": get_mismappings(index, version_context),
             "tech_and_subs": tech_and_subs,
             "tactic_context": tactic_context,
+            "mitigations": mitigation_entries,
             "version": version_context,
         }
     }
