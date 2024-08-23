@@ -35,6 +35,7 @@ def mitigations_table(version, src_mgr):
             {
                 # fmt: off
                 "uid"           : next_mitigation_uid + uid_offset,
+                "name"          : mtg["name"],
                 "attack_version": version,
                 "mit_id"        : mit_id,
                 "source"        : mtg["source"],
