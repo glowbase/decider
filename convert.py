@@ -1,197 +1,133 @@
-import pandas as pd
 import os
-import json
 import re
+import json
+from openpyxl import load_workbook
 import app.constants as constants
 
 if __name__ == "__main__":
-    # load spreadsheet tables
-    mapping_spreadsheet = pd.read_excel(
-        f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)}/mappings.xlsx",
-        sheet_name="Blue Team Guide"
-    )
+    path = os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)
+    file = f"{path}/mappings.xlsx"
 
-    ism_spreadsheet = pd.read_excel(
-        f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)}/mappings.xlsx",
-        sheet_name="ISM Controls"
-    )
-
-    nist_spreadsheet = pd.read_excel(
-        f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)}/mappings.xlsx",
-        sheet_name="NIST Controls"
-    )
+    workbook = load_workbook(file)
     
-    mitre_spreadsheet = pd.read_excel(
-        f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)}/mappings.xlsx",
-        sheet_name="MITRE Controls"
-    )
+    main_sheet = workbook["Blue Team Guide"]
+    uses_sheet = workbook["MITRE Uses"]
+    mitre_sheet = workbook["MITRE Controls"]
+    nist_sheet = workbook["NIST Controls"]
+    ism_sheet = workbook["ISM Controls"]
 
-    # globals
-    mapping_data = json.loads(mapping_spreadsheet.to_json())
-    ism_data = json.loads(ism_spreadsheet.to_json())
-    nist_data = json.loads(nist_spreadsheet.to_json())
-    mitre_data = json.loads(mitre_spreadsheet.to_json())
+    mitigations = {}
+    uses = {}
+    isms = {}
+    nists = {}
 
-    columns = []
-    table = {}
-    output = {}
-    
-    ism_list = {}
-    nist_list = {}
-    mitre_list = {}
+    # mitre control uses
+    overarching_mitigation = ""
+    overarching_technique = ""
 
-    # create ism mappings dictionary
-    for column in ism_data:
-        for index, row in enumerate(ism_data[column].values()):
-            description = ism_data["Description"][str(index)]
-            control = ism_data["Identifier"][str(index)]
-            section = ism_data["Section"][str(index)]
+    for row_i, row in enumerate(uses_sheet.iter_rows()):
+        if row_i == 1: continue
 
-            ism_list[control] = {}
-            ism_list[control]["description"] = description
-            ism_list[control]["section"] = section
-            ism_list[control]["code"] = control
-            #### URL NEEDS TO BE PART OF THE RENDER TEMPLATE
-            ism_list[control]["url"] = f"https://ismcontrol.xyz/{control.split('-')[1]}"
+        technique = ""
 
-    # create nist mapping dictionary
-    for column in nist_data:
-        for index, row in enumerate(nist_data[column].values()):
-            control = nist_data["Control Identifier"][str(index)]
-            description = nist_data["Control (or Control Enhancement)"][str(index)]
-            section = nist_data["Control (or Control Enhancement) Name"][str(index)]
+        # 0: id, 1: sub-technique, 3: use
+        for i, col in enumerate(row):
+            col = str(col.value)
 
-            # the nist control doesn't have a 0 prefix
-            if len(re.findall(r"[A-Z]{2}-[0-9]{1,2}", control)[0].split("-")[1]) == 1:
-                control = f"{control[:3]}0{control[3:]}"
+            if i == 0:
+                mitigation = re.findall(r".*?\((M[0-9]{4})\)", col)
+                technique = re.findall(r"(T[0-9]{4})", col)
 
-            nist_list[control] = {}
-            nist_list[control]["description"] = description
-            nist_list[control]["section"] = section
-            nist_list[control]["code"] = control
-            #### URL NEEDS TO BE PART OF THE RENDER TEMPLATE
-            nist_list[control]["url"] = f"https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element={control}"
+                if len(technique) != 0: overarching_technique = technique[0]
+                if len(mitigation) != 0: overarching_mitigation = mitigation[0]
+            if i == 1 and row_i != 0:
+                technique = overarching_technique
 
-    # create mitre mapping dictionary
-    for column in mitre_data:
-        for index, row in enumerate(mitre_data[column].values()):
-            control = mitre_data["ID"][str(index)]
-            description = mitre_data["Description"][str(index)]
-            section = mitre_data["Name"][str(index)]
-
-            mitre_list[control] = {}
-            mitre_list[control]["description"] = description
-            mitre_list[control]["section"] = section
-            mitre_list[control]["code"] = control
-            #### URL NEEDS TO BE PART OF THE RENDER TEMPLATE
-            mitre_list[control]["url"] = f"https://attack.mitre.org/mitigations/{control}"
-
-    # for each column in spreadsheet
-    for ch in mapping_data.keys():
-        column_header = ch.lower()
-        columns.append(column_header)
-
-        # create skeleton dictionary
-        table[column_header] = []
-        
-        # keep track of over-arching technique
-        overarching_technique = None
-
-        # for each row in the column
-        for row in mapping_data[ch].values():
-
-            # technique
-            if column_header == "technique":
-                value = re.findall(r".*?\s\(((TA?|\.)[0-9]{3,4})\)", str(row))[0][0]
+                if col != "None":
+                    technique = f"{overarching_technique}.{col.split('.')[1]}"
+            if i == 3 and row_i != 0 and col != "None" and col != "Use":
+                if not overarching_mitigation in uses:
+                    uses[overarching_mitigation] = {}
                 
-                # determine if the value is a tactic/technique
-                # if so, make it over-arching and tack on .xxx
-                if re.match(r"TA?[0-9]{4}", value):
-                    overarching_technique = value
-                else:
-                    value = f"{overarching_technique}{value}"
+                uses[overarching_mitigation][technique] = { "use": col }
 
-                table[column_header].append(value)
+    # main sheet with all information
+    overarching_technique = ""
 
-            # module
-            if column_header == "module":
-                value = re.findall(r"•\s(.*)", str(row))
-                table[column_header].append(value)
+    for row_i, row in enumerate(main_sheet.iter_rows()):
+        if row_i == 0: continue
 
-            # evidence
-            if column_header == "evidence":
-                lists = str(row).split("WINDOWS")
+        full_technique = ""
 
-                if len(lists) >= 2:
-                    windows = re.findall(r"(.*)\:\s(.*)", lists[0])
-                    linux = re.findall(r"(.*)\:\s(.*)", lists[1])
+        for i, col in enumerate(row):
+            col = str(col.value)
 
-                    table[column_header].append({
-                        "linux": linux,
-                        "windows": windows
-                    })
-                else:
-                    table[column_header].append({
-                        "linux": [],
-                        "windows": []
-                    })
+            if i == 0:
+                technique = re.findall(r".*\((T[0-9]{4})\)", col)
+                subtechnique = re.findall(r".*\((\.[0-9]{3})\)", col)
 
-            # tools
-            if column_header == "tools":
-                value = str(row).split()
-                table[column_header].append(value)
+                if len(technique) != 0:
+                    full_technique = technique[0]
+                    overarching_technique = technique[0]
 
-            # mitigation
-            if column_header == "mitigation":
-                value = re.findall(r"\.*?\((M[0-9]{4})\)", str(row))
-                table[column_header].append(value)
+                if len(subtechnique) != 0:
+                    full_technique = overarching_technique + subtechnique[0]
+            if i == 6:
+                ism_controls = re.findall(r"ISM-[0-9]{4}", col)
 
-            # ism
-            if column_header == "ism":
-                value = re.findall(r"ISM-([0-9]{4})", str(row))
-                table[column_header].append(value)
-        
-            # nist
-            if column_header == "nist":
-                value = re.findall(r".*?\s\(([A-Z]{1,2}-[0-9]{1,2})\)", str(row))
-                table[column_header].append(value)
+                for ism in ism_controls:
+                    if ism not in isms:
+                        isms[ism] = {}
+                    
+                    isms[ism][full_technique] = { 'use': None }
 
-    # format json data into a better dictionary
-    for index, technique in enumerate(table["technique"]):
+    # mitre controls
+    for i, rows in enumerate(mitre_sheet.iter_rows()):
+        if i == 0: continue
 
-        # don't add tactics
-        if not re.match(r"TA[0-9]{4}", technique):
-            # create a new dictionary for each technique
-            output[technique] = {}
-            output[technique]["version"] = "v15.1"
+        values = { "source": "MITRE", "techniques": [] }
+
+        # 0: id, 1: name, 2: description
+        for i, row in enumerate(rows):
+            if i == 1: values["name"] = row.value
+            if i == 2: values["description"] = row.value
+            if i == 0: 
+                mitigations[row.value] = values
+                
+                if row.value in uses:
+                    mitigations[row.value]["techniques"] = uses[row.value]
+
+    # nist controls
+    for i, rows in enumerate(nist_sheet.iter_rows()):
+        if i == 0: continue
+
+        values = { "source": "NIST", "techniques": [] }
+
+        # 0: id, 1: name, 2: description
+        for i, row in enumerate(rows):
+
+            # not a nist sub-technique
+            if re.match(r"[A-Z]{2}-[0-9]{1,2}\([0-9]{1,2}\)", str(row.value)): continue
             
-            for column in columns:
-                if not column == "artefacts":
-                    output[technique][column] = []
+            if i == 1: values["name"] = row.value
+            if i == 2: values["description"] = row.value
+            if i == 0: mitigations[row.value] = values
 
-                    if column == "ism":
-                        ism_controls = table[column][index]
-                        
-                        for ism_control in ism_controls:
-                            ism_control = f"ISM-{ism_control}"
+    # ism controls
+    for i, rows in enumerate(ism_sheet.iter_rows()):
+        if i == 0: continue
 
-                            output[technique][column].append(ism_list[ism_control])
-                    elif column == "nist":
-                        nist_controls = table[column][index]
+        values = { "source": "ISM", "techniques": [] }
 
-                        for nist_control in nist_controls:
-                            output[technique][column].append(nist_list[nist_control])
-                    elif column == "mitigation":
-                        mitre_controls = table[column][index]
+        # 0: id, 1: name, 2: description
+        for i, row in enumerate(rows):
+            if i == 1: values["name"] = row.value
+            if i == 2: values["description"] = row.value
+            if i == 0:
+                mitigations[row.value] = values
 
-                        for mitre_control in mitre_controls:
-                            output[technique][column].append(mitre_list[mitre_control])
-                    else:
-                        output[technique][column] = table[column][index]
-    
-    # serialise output json
-    json_object = json.dumps(output, indent=4)
-    
-    # write to file
-    with open(f"{os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir, constants.mitigations_mapping_file_base)}-v15.1.json", "w") as outfile:
-        outfile.write(json_object)
+                if row.value in isms:
+                    mitigations[row.value]["techniques"] = isms[row.value]
+
+    with open(f"{path}/mappings-v15.1.json", "w") as outfile: 
+        json.dump(mitigations, outfile)
