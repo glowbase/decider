@@ -8,7 +8,7 @@ if __name__ == "__main__":
     path = os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)
     file = f"{path}/mappings.xlsx"
 
-    workbook = load_workbook(file)
+    workbook = load_workbook(file, data_only=True)
     
     main_sheet = workbook["Blue Team Guide"]
     uses_sheet = workbook["MITRE Uses"]
@@ -80,6 +80,14 @@ if __name__ == "__main__":
                         isms[ism] = {}
                     
                     isms[ism][full_technique] = { 'use': None }
+            if i == 7:
+                nist_controls = re.findall(r".*?([A-Z]{2}-[0-9]{1,2})", col)
+
+                for nist in nist_controls:
+                    if nist not in nists:
+                        nists[nist] = {}
+
+                    nists[nist][full_technique] = { 'use': None }
 
     # mitre controls
     for i, rows in enumerate(mitre_sheet.iter_rows()):
@@ -111,7 +119,11 @@ if __name__ == "__main__":
             
             if i == 1: values["name"] = row.value
             if i == 2: values["description"] = row.value
-            if i == 0: mitigations[row.value] = values
+            if i == 0: 
+                mitigations[row.value] = values
+
+                if row.value in nists:
+                    mitigations[row.value]["techniques"] = nists[row.value]
 
     # ism controls
     for i, rows in enumerate(ism_sheet.iter_rows()):
