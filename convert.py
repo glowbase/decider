@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import yaml
 from openpyxl import load_workbook
 import app.constants as constants
 
@@ -78,7 +79,7 @@ if __name__ == "__main__":
                 for ism in ism_controls:
                     if ism not in isms:
                         isms[ism] = {}
-                    
+
                     isms[ism][full_technique] = { 'use': None }
             if i == 7:
                 nist_controls = re.findall(r".*?([A-Z]{2}-[0-9]{1,2})", col)
@@ -133,7 +134,7 @@ if __name__ == "__main__":
 
         # 0: id, 1: name, 2: description
         for i, row in enumerate(rows):
-            if i == 1: values["name"] = row.value
+            if i == 1 and len(row.value) > 0: values["name"] = row.value
             if i == 2: values["description"] = row.value
             if i == 0:
                 mitigations[row.value] = values
