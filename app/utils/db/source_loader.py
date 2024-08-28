@@ -116,6 +116,7 @@ class MitigationFile(SourceFile):
         if not isinstance(self.data, dict):
             raise Exception("The root of this file isn't a dictionary as expected.")
 
+        del_keys = []
         # check entries
         for ind, (key, value) in enumerate(self.data.items()):
 
@@ -123,7 +124,9 @@ class MitigationFile(SourceFile):
             if not isinstance(key, str):
                 raise Exception(f"The key ({key}) for entry #{ind} is not a string as expected.")
             if not re.fullmatch(r"(M[0-9]{4}|ISM-[0-9]{3,4}|[A-Z]{2}-[0-9]{1,3})", key):
-                raise Exception(f"The key ({key}) for entry #{ind} is not a Mitigation ID as expected.")
+                del_keys.append(key)
+                continue
+                #raise Exception(f"The key ({key}) for entry #{ind} is not a Mitigation ID as expected.")
 
             # values are dictionaries with required keys
             if not isinstance(value, dict):
@@ -133,6 +136,9 @@ class MitigationFile(SourceFile):
             if not expected_keys.issubset(value.keys()):
                 raise Exception(f"The entry at key ({key}) does not have all required keys: {expected_keys}.")
 
+        for key in del_keys:
+            del self.data[key]
+            
 class TreeFile(SourceFile):
     def validate(self):
 

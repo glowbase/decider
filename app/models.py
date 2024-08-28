@@ -220,5 +220,5 @@ technique_mitigation_map = db.Table(
     "technique_mitigation_map",
     db.Column("technique", db.Integer, db.ForeignKey("technique.uid"), primary_key=True),
     db.Column("mitigation", db.Integer, db.ForeignKey("mitigation.uid"), primary_key=True),
-    db.Column("use", db.Text, nullable=False),
+    db.Column("use", db.Text, nullable=True),
 )

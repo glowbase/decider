@@ -319,7 +319,7 @@ def main():
                     )
                     sys.exit(12)
 
-            # Migitation Mappings
+            # Mitigation Mappings
             if version in mitigations_versions:
                 try:
                     db_create.mitigation.add_version(version, src_mgr)
