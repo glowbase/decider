@@ -5,7 +5,9 @@ import yaml
 from openpyxl import load_workbook
 import app.constants as constants
 
-if __name__ == "__main__":
+version = "v15.1"
+
+def mappings():
     path = os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)
     file = f"{path}/mappings.xlsx"
 
@@ -142,5 +144,85 @@ if __name__ == "__main__":
                 if row.value in isms:
                     mitigations[row.value]["techniques"] = isms[row.value]
 
-    with open(f"{path}/mappings-v15.1.json", "w") as outfile: 
+    with open(f"{path}/mappings-{version}.json", "w") as outfile: 
         json.dump(mitigations, outfile)
+
+def lolbas():
+    yaml_dirs = ["OSBinaries", "OSLibraries", "OSScripts", "OtherMSBinaries"]
+    lolbas = {}
+
+    for yaml_dir in yaml_dirs:
+        yaml_files = os.listdir(f"{constants.BUILD_SOURCES_DIR}/lolbas/yml/{yaml_dir}")
+
+        for yaml_file in yaml_files:
+            yaml_path = f"{constants.BUILD_SOURCES_DIR}/LOLBAS/yml/{yaml_dir}/{yaml_file}"
+            
+            with open(yaml_path, "r") as in_file:
+                yaml_data = yaml.safe_load(in_file)
+
+                techniques = {}
+                paths = []
+
+                for command in yaml_data["Commands"]:
+                    techniques[command["MitreID"]] = {
+                        "command": command["Command"].replace('//', '/\/'),
+                        "use": command["Usecase"],
+                        "privilege": command["Privileges"],
+                        "os": command["OperatingSystem"].split(", ")
+                    }
+
+                for path in yaml_data["Full_Path"]:
+                    paths.append(path)
+
+                lolbas[yaml_data["Name"]] = {
+                   "description": yaml_data["Description"],
+                   "paths": paths,
+                   "type": yaml_dir,
+                   "techniques": techniques
+                }
+        
+    with open(f"{constants.BUILD_SOURCES_DIR}/lolbas/lolbas-{version}.json", "w") as outfile:
+        json.dump(lolbas, outfile)
+
+def tools():
+    path = os.path.join(constants.BUILD_SOURCES_DIR, constants.mitigations_mapping_dir)
+    file = f"{path}/mappings.xlsx"
+
+    workbook = load_workbook(file, data_only=True)
+    
+    main_sheet = workbook["Blue Team Guide"]
+
+    overarching_technique = ""
+
+    for row_i, row in enumerate(main_sheet.iter_rows()):
+        if row_i == 0: continue
+
+        full_technique = ""
+
+        for i, col in enumerate(row):
+            if i == 0:
+                technique = re.findall(r".*\((T[0-9]{4})\)", col.value)
+                subtechnique = re.findall(r".*\((\.[0-9]{3})\)", col.value)
+
+                if len(technique) != 0:
+                    full_technique = technique[0]
+                    overarching_technique = technique[0]
+
+                if len(subtechnique) != 0:
+                    full_technique = overarching_technique + subtechnique[0]
+            if i == 4:
+                if col.hyperlink is not None:
+                    print(col.hyperlink, col.value)
+                # ism_controls = re.findall(r"ISM-[0-9]{4}", col)
+
+                # for ism in ism_controls:
+                #     if ism not in isms:
+                #         isms[ism] = {}
+
+                #     isms[ism][full_technique] = { 'use': None }
+
+
+if __name__ == "__main__":
+    # mappings()
+    # lolbas()
+    tools()
