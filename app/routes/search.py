@@ -156,6 +156,18 @@ def search_page():
     logger.debug(f"querying Data Sources in ATT&CK {ver_name} for filters")
     data_source_names = [d.readable_name for d in ver_model.data_sources]
 
+    #############################################
+    #############################################
+    ## Needs to come from the database
+    ## Will require an update to the db import to
+    ## include the Mitigation_Source table
+    
+    #logger.debug(f"querying Mitigations in ATT&CK {ver_name} for filters")
+    mitigation_names = ["MITRE", "ISM", "NIST"]
+    #############################################
+    #############################################
+    
+
     tactic_filters = checkbox_filters_component(
         "tactic_fs",
         tactic_names,
@@ -177,9 +189,16 @@ def search_page():
         "searchUpdateDataSources(this)",
         different_name="Data Source",
     )
+    mitigation_filters = checkbox_filters_component(
+        "mitigation_fs",
+        mitigation_names,
+        "searchClearMitigations()",
+        "searchUpdateMitigations(this)",
+        different_name="Mitigation",
+    )
 
     response = make_response(
-        render_template("search.html", **tactic_filters, **platform_filters, **data_source_filters)
+        render_template("search.html", **tactic_filters, **platform_filters, **data_source_filters, **mitigation_filters)
     )
 
     logger.info("serving page")
@@ -235,8 +254,10 @@ def full_search():
     version = request.args.get("version")
     search_str = request.args.get("search")
     tactics = request.args.getlist("tactics")
+    mitigations = request.args.getlist("mitigations")
     platforms = request.args.getlist("platforms")
     data_sources = request.args.getlist("data_sources")
+
     if not technique_search_args_are_valid(version, search_str, tactics, platforms, data_sources):
         # technique_search_args_are_valid has the error log action - this just shows a 400 will be sent
         logger.debug("request malformed - serving them a 400 code")
@@ -317,7 +338,7 @@ def full_search():
         ).filter(generate_existing.c.exists)
     )
         
-    print(str(filter_and_scoreq.statement))
+    logger.debug(str(filter_and_scoreq.statement))
     filter_and_score = filter_and_scoreq.all()
 
     logger.debug(f"got {len(filter_and_score)} matching Techniques")

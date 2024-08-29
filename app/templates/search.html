@@ -83,6 +83,64 @@
                 </div>
             </div>
 
+            {# Mitigations #}
+            <div x-data="collapseTracker(false, 'search-mitigation')" x-bind="binds" class="row mb-3 filterRow">
+
+                <div class="col-4 col-md-12 text-center">
+                    <h3 class="fs-5 my-1">Filter Mitigations</h3>
+                    <div class="btn-group-vertical w-100 mb-2">
+                        <button
+                            class="btn btn-success"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#mitigationFilterCheckboxes"
+                            aria-controls="mitigationFilterCheckboxes"
+                            aria-label="Show / hide Mitigation filters"
+                            title="Show / hide Mitigation filters"
+                            x-text="`${show ? 'Hide' : 'Show'} Filters`"
+                            :aria-expanded="show"
+                        >Show Filters</button>
+                        <button
+                            class="btn btn-secondary"
+                            type="button"
+                            @click="mitigations = []"
+                            :aria-label="`Clear ${mitigations.length} mitigation filters`"
+                            title="Clear mitigation filters"
+                        >
+                            Clear Filters&nbsp;
+                            <span class="badge text-bg-light" x-text="mitigations.length">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div x-ref="collapse" id="mitigationFilterCheckboxes" class="col-8 col-md-12 collapse filterCheckboxes">
+                    <div class="row">
+
+                        {# Checkboxes #}
+                        <template x-for="mitigation in $store.search.mitigationFilters.items" :key="mitigation.value">
+                            <div class="col-12">
+                                <div class="form-check" x-id="['mitigation-check']">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        :id="$id('mitigation-check')"
+                                        :value="mitigation.value"
+                                        x-model.debounce="mitigations"
+                                        :aria-label="`mitigation filter ${mitigation.name}`"
+                                    >
+                                    <label
+                                        class="form-check-label"
+                                        :for="$id('mitigation-check')"
+                                        x-text="mitigation.name"
+                                    ></label>
+                                </div>
+                            </div>
+                        </template>
+
+                    </div>
+                </div>
+            </div>
+
             {# Platform #}
             <div x-data="collapseTracker(false, 'search-platform')" x-bind="binds" class="row mb-3 filterRow">
 
@@ -261,6 +319,9 @@
         const tacticFilters = {{ tactic_fs_filters | tojson }};
         cleanupFilterObject(tacticFilters, false);
 
+        const mitigationFilters = {{ mitigation_fs_filters | tojson }};
+        cleanupFilterObject(mitigationFilters, true);
+
         const platformFilters = {{ platform_fs_filters | tojson }};
         cleanupFilterObject(platformFilters, true);
 
@@ -269,6 +330,7 @@
 
         Alpine.store('search', {
             tacticFilters: tacticFilters,
+            mitigationFilters: mitigationFilters,
             platformFilters: platformFilters,
             dataSrcFilters: dataSrcFilters,
         });
