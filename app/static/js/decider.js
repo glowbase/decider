@@ -1387,7 +1387,7 @@ document.addEventListener('alpine:init', function () {
         search: '',
         searchStatus: '',
         tactics: [],
-        mitigations: [],
+        mitigation_sources: [],
         platforms: [],
         data_sources: [],
 
@@ -1405,7 +1405,7 @@ document.addEventListener('alpine:init', function () {
             this.version = url.searchParams.get('version');
             this.search = url.searchParams.get('search');
             this.tactics = url.searchParams.getAll('tactics');
-            this.mitigations = url.searchParams.getAll('mitigations');
+            this.mitigation_sources = url.searchParams.getAll('mitigation_sources');
             this.platforms = url.searchParams.getAll('platforms');
             this.data_sources = url.searchParams.getAll('data_sources');
         },
@@ -1416,7 +1416,7 @@ document.addEventListener('alpine:init', function () {
                 version: this.version,
                 search: this.search,
                 tactics: this.tactics,
-                mitigations: this.mitigations,
+                mitigation_sources: this.mitigation_sources,
                 platforms: this.platforms,
                 data_sources: this.data_sources,
             });
@@ -1430,7 +1430,7 @@ document.addEventListener('alpine:init', function () {
                     version: this.version,
                     search: this.search,
                     tactics: this.tactics,
-                    mitigations: this.mitigations,
+                    mitigation_sources: this.mitigation_sources,
                     platforms: this.platforms,
                     data_sources: this.data_sources,
                 },

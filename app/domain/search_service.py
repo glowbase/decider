@@ -163,7 +163,7 @@ def plain_rep(bexpr, sym_terms):
     elif isinstance(bexpr, boolean.NOT):
         return "~" + plain_rep(bexpr.args[0], sym_terms)
 
-def technique_search_args_are_valid(version, query, tactics, platforms, data_sources):
+def technique_search_args_are_valid(version, query, tactics, mitigation_sources, platforms, data_sources):
     """Validates the attempted arguments for a technique search request
 
     - pulled-out to prevent an overly-long function
@@ -189,6 +189,22 @@ def technique_search_args_are_valid(version, query, tactics, platforms, data_sou
     specified_tactics = set(tactics)
     if len(specified_tactics) != len(specified_tactics.intersection(valid_tactics)):
         logger.error("request malformed - tactic(s) specified aren't in version")
+        return False
+
+    # ensure that specified mitigation Sources exist
+    logger.debug(f"querying Mitigation Sources in ATT&CK {version} (to validate request)")
+    #############################################
+    #############################################
+    ## Needs to come from the database
+    ## Will require an update to the db import to
+    ## include the Mitigation_Source table
+    valid_mitigation_sources = ['ism', 'mitre', 'nist']
+    #############################################
+    #############################################
+    
+    specified_mitigation_sources = set(mitigation_sources)
+    if len(specified_mitigation_sources) != len(specified_mitigation_sources.intersection(valid_mitigation_sources)):
+        logger.error("request malformed - mitigation Source(s) specified aren't in version")
         return False
 
     # ensure that specified platforms exist

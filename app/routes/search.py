@@ -124,9 +124,10 @@ def search_page():
     version = request.args.get("version")
     search_str = request.args.get("search")
     tactics = request.args.getlist("tactics")
+    mitigation_sources = request.args.getlist("mitigation_sources")
     platforms = request.args.getlist("platforms")
     data_sources = request.args.getlist("data_sources")
-    if not technique_search_args_are_valid(version, search_str, tactics, platforms, data_sources):
+    if not technique_search_args_are_valid(version, search_str, tactics, mitigation_sources, platforms, data_sources):
         # technique_search_args_are_valid has the error log action - this just shows a 404 will be sent
         logger.debug("request malformed - serving them a 404 page")
         return (
@@ -162,8 +163,8 @@ def search_page():
     ## Will require an update to the db import to
     ## include the Mitigation_Source table
     
-    #logger.debug(f"querying Mitigations in ATT&CK {ver_name} for filters")
-    mitigation_names = ["MITRE", "ISM", "NIST"]
+    #logger.debug(f"querying Mitigation Sources in ATT&CK {ver_name} for filters")
+    mitigation_source_names = ["MITRE", "ISM", "NIST"]
     #############################################
     #############################################
     
@@ -189,16 +190,16 @@ def search_page():
         "searchUpdateDataSources(this)",
         different_name="Data Source",
     )
-    mitigation_filters = checkbox_filters_component(
-        "mitigation_fs",
-        mitigation_names,
-        "searchClearMitigations()",
-        "searchUpdateMitigations(this)",
-        different_name="Mitigation",
+    mitigation_source_filters = checkbox_filters_component(
+        "mitigation_source_fs",
+        mitigation_source_names,
+        "searchClearMitigationSources()",
+        "searchUpdateMitigationSources(this)",
+        different_name="Mitigation Source",
     )
 
     response = make_response(
-        render_template("search.html", **tactic_filters, **platform_filters, **data_source_filters, **mitigation_filters)
+        render_template("search.html", **tactic_filters, **platform_filters, **data_source_filters, **mitigation_source_filters)
     )
 
     logger.info("serving page")
@@ -254,11 +255,11 @@ def full_search():
     version = request.args.get("version")
     search_str = request.args.get("search")
     tactics = request.args.getlist("tactics")
-    mitigations = request.args.getlist("mitigations")
+    mitigation_sources = request.args.getlist("mitigation_sources")
     platforms = request.args.getlist("platforms")
     data_sources = request.args.getlist("data_sources")
 
-    if not technique_search_args_are_valid(version, search_str, tactics, platforms, data_sources):
+    if not technique_search_args_are_valid(version, search_str, tactics, mitigation_sources, platforms, data_sources):
         # technique_search_args_are_valid has the error log action - this just shows a 400 will be sent
         logger.debug("request malformed - serving them a 400 code")
         return jsonify(message="Invalid search parameters"), 400
