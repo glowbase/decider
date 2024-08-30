@@ -25,6 +25,7 @@ from app.models import (
     Aka,
     Mismapping,
     Blurb,
+    MitigationSource,
     Mitigation,
 )
 from app.models import (
@@ -386,7 +387,7 @@ def success_page_vars(index, tactic_context, version_context):
             func.array_agg(distinct(array([Tactic.tact_id, Tactic.tact_name]))),  # 1
             func.array_agg(distinct(Platform.readable_name)),  # 2
             func.array_remove(func.array_agg(distinct(Aka.term)), None),  # 3
-            func.array_agg(distinct(array([Mitigation.mit_id, Mitigation.source, Mitigation.name, Mitigation.description, technique_mitigation_map.c.use]))),  # 4
+            func.array_agg(distinct(array([Mitigation.mit_id, MitigationSource.source, MitigationSource.display_name, MitigationSource.url, Mitigation.name, Mitigation.description, technique_mitigation_map.c.use]))),  # 4
         )
         .filter(
             and_(
@@ -402,6 +403,7 @@ def success_page_vars(index, tactic_context, version_context):
         .outerjoin(Aka, technique_aka_map.c.aka == Aka.uid)
         .outerjoin(technique_mitigation_map, technique_mitigation_map.c.technique == Technique.uid)
         .outerjoin(Mitigation, Mitigation.uid == technique_mitigation_map.c.mitigation)
+        .outerjoin(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
         .group_by(Technique.uid)
     ).first()
     logger.debug(f"got {len(tact_ids_names)} Tactics, {len(platforms)} Platforms, {len(akas)} AKAs, and {len(mitigations)} Mitigations")
@@ -418,14 +420,16 @@ def success_page_vars(index, tactic_context, version_context):
     ]
 
     mitigation_entries = {}
-    for mit_id, source, name, description, use in mitigations:
-        if source not in mitigation_entries:
-            mitigation_entries[source] = []
+    for mit_id, source_type, source_display_name, source_url, name, description, use in mitigations:
+        if source_type not in mitigation_entries:
+            mitigation_entries[source_type] = []
         
-        mitigation_entries[source].append(
+        mitigation_entries[source_type].append(
             {
                 "mit_id": mit_id,
                 "name": name,
+                "source_display_name": source_display_name,
+                "source_url": source_url,
                 "description": description,
                 "use": use,
             }

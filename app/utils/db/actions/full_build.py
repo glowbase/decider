@@ -205,6 +205,14 @@ def main():
         else:
             print("Mismappings will not be installed for any versions.")
 
+        # Mitigation Sources Mappings
+        src_mgr.mitigation_sources.load_validate()
+        mitigation_sources_versions = src_mgr.mitigation_sources.get_data()
+        if len(mitigation_sources_versions) != 0:
+            print(f"Loaded and will install Mitigation Sources for versions: {mismap_versions}")
+        else:
+            print("Mitigation Sources will not be installed for any versions.")
+
         # Mitigation Mappings
         mitigations_versions = {
             v

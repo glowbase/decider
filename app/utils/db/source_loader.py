@@ -110,6 +110,11 @@ class AttackFile(SourceFile):
 
         self.data = active_secondary
 
+class MitigationSourceFile(SourceFile):
+    def validate(self):
+        if not isinstance(self.data, dict):
+            raise Exception("The root of this file isn't a dictionary as expected.")
+
 class MitigationFile(SourceFile):
     def validate(self):
         # base object is dictionary
@@ -325,3 +330,4 @@ class SourceManager:
         self.mismaps = self.multiversion_as_dict(MismappingsFile, os.path.join(sources_dir, "./mismappings/"))
         self.akas = self.multiversion_as_dict(AkasFile, os.path.join(sources_dir, "./akas/"))
         self.mitigations = self.multiversion_as_dict(MitigationFile, os.path.join(sources_dir, "./mappings/"))
+        self.mitigation_sources = MitigationSourceFile(os.path.join(sources_dir, "./mitigation_sources.json"))
