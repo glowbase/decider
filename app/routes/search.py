@@ -205,9 +205,8 @@ def search_page():
     logger.info("serving page")
     return response
 
-@search_.route("/search/full", methods=["GET"])
-@wrap_exceptions_as(ErrorDuringAJAXRoute)
-def full_search():
+def technique_search(search_tsqry, tactics, version, platforms, data_sources):
+    results = []
     """Performs a full Technique search and returns highlighted & ranked results
 
     URL Params
@@ -249,45 +248,7 @@ def full_search():
     5. Highlights and description highlight snippets are generated for the results
     6. Results are ordered and sent out
     """
-    g.route_title = "Full-Search"
-
-    # get and validate parameters
-    version = request.args.get("version")
-    search_str = request.args.get("search")
-    tactics = request.args.getlist("tactics")
-    mitigation_sources = request.args.getlist("mitigation_sources")
-    platforms = request.args.getlist("platforms")
-    data_sources = request.args.getlist("data_sources")
-
-    if not technique_search_args_are_valid(version, search_str, tactics, mitigation_sources, platforms, data_sources):
-        # technique_search_args_are_valid has the error log action - this just shows a 400 will be sent
-        logger.debug("request malformed - serving them a 400 code")
-        return jsonify(message="Invalid search parameters"), 400
-
-    # empty & too-long (arbitrary really) search cases
-    if not search_str:
-        logger.info("request skipped - no search query entered")
-        return jsonify(status="Please type a search query"), 200
-    elif len(search_str) > 512:
-        logger.info("request skipped - query >512 characters long entered")
-        return jsonify(status="Please type a shorter search query"), 200
-
-    # parse the search string
-    try:
-        parsed_search = parse_search_str(search_str)
-
-        # handled misformatting -> relay error msg
-        if parsed_search.error is not None:
-            logger.info("request skipped - they typed an invalid search query")
-            return jsonify(status=parsed_search.error), 200
-
-    # unexpected error -> generic response
-    except Exception as e:
-        logger.exception("request skipped - they typed an invalid search query (unexpected error)", exc_info=e)
-        return jsonify(status="Unable to parse the provided search query"), 200
-
-    search_tsqry = tsqry_rep(parsed_search.bool_expr, parsed_search.sym_to_term)
-
+    
     tsvec = PSQLTxt.multiline_cleanup(
         """
         technique.tech_ts || setweight(
@@ -410,7 +371,6 @@ def full_search():
     logger.debug("query finished")
 
     # build response
-    results = []
     for (
         tech_id,
         tech_name,
@@ -436,8 +396,9 @@ def full_search():
 
         results.append(
             {
+                "technique": True,
                 "tech_id": hl_id,
-                "tech_id_plain": tech_id,
+                "card_id_plain": tech_id,
                 "tech_name": hl_name,
                 "tech_name_plain": tech_name,
                 "description": tdesc,
@@ -446,12 +407,106 @@ def full_search():
                     "question_.notactic_success", version=version, subpath=tech_id.replace(".", "/")
                 ),
                 "akas": hl_akas.split("    ") if hl_akas else [],
+                "score": tech_to_score[tech_id],
             }
         )
 
-    # order by match score and then Tech ID
-    results.sort(key=lambda t: (-tech_to_score[t["tech_id_plain"]], float(t["tech_id_plain"][1:])))
+    return results
 
+def mitigation_search(search_tsqry, mitigation_sources, version):
+    results = []
+    results.append(
+            {
+                "mitigation": True,
+                "mit_id": "M1098",
+                "card_id_plain": "1098",
+                "mitigation_name": "Mitigation Name",
+                "mitigation_name_plain": "Mitigation Name",
+                "description": "This is the description of a mitigation. It contains a lot of information about the mitigation and how it can be used to protect against attacks.",
+                "attack_url": "http://localhost/test",                
+                "internal_url": url_for(
+                    "question_.notactic_success", version="v15.1", subpath="M1098".replace(".", "/")
+                ),
+                "score": 0.19,
+            }
+        )
+    
+    return results
+
+def mitigation_use_search(search_tsqry, mitigation_sources, version):
+    results = []
+    results.append(
+            {
+                "mitigation_use": True,
+                "tech_id": "T1876",
+                "mit_id": "M1098",
+                "card_id_plain": "1667.1098",
+                "technique_name": "Technique Name",
+                "mitigation_name": "Mitigation Name",
+                "use_name_plain": "Technique Name - Mitigation Name",
+                "use": "This is the use of a mitigation for a specific technique. It contains a lot of information about the mitigation and how it can be used to protect against attacks.",
+                "attack_url": "http://localhost/test",                
+                "internal_url": url_for(
+                    "question_.notactic_success", version="v15.1", subpath="M1098".replace(".", "/")
+                ),
+                "score": 0.05,
+            }
+        )
+    
+    return results
+
+@search_.route("/search/full", methods=["GET"])
+@wrap_exceptions_as(ErrorDuringAJAXRoute)
+def full_search():
+    
+    results = []
+    g.route_title = "Full-Search"
+
+    # get and validate parameters
+    version = request.args.get("version")
+    search_str = request.args.get("search")
+    tactics = request.args.getlist("tactics")
+    mitigation_sources = request.args.getlist("mitigation_sources")
+    platforms = request.args.getlist("platforms")
+    data_sources = request.args.getlist("data_sources")
+
+    if not technique_search_args_are_valid(version, search_str, tactics, mitigation_sources, platforms, data_sources):
+        # technique_search_args_are_valid has the error log action - this just shows a 400 will be sent
+        logger.debug("request malformed - serving them a 400 code")
+        return jsonify(message="Invalid search parameters"), 400
+
+    # empty & too-long (arbitrary really) search cases
+    if not search_str:
+        logger.info("request skipped - no search query entered")
+        return jsonify(status="Please type a search query"), 200
+    elif len(search_str) > 512:
+        logger.info("request skipped - query >512 characters long entered")
+        return jsonify(status="Please type a shorter search query"), 200
+
+    # parse the search string
+    try:
+        parsed_search = parse_search_str(search_str)
+
+        # handled misformatting -> relay error msg
+        if parsed_search.error is not None:
+            logger.info("request skipped - they typed an invalid search query")
+            return jsonify(status=parsed_search.error), 200
+
+    # unexpected error -> generic response
+    except Exception as e:
+        logger.exception("request skipped - they typed an invalid search query (unexpected error)", exc_info=e)
+        return jsonify(status="Unable to parse the provided search query"), 200
+
+    search_tsqry = tsqry_rep(parsed_search.bool_expr, parsed_search.sym_to_term)
+
+    results.extend(technique_search(search_tsqry, tactics, version, platforms, data_sources))
+
+    results.extend(mitigation_search(search_tsqry, mitigation_sources, version))
+    results.extend(mitigation_use_search(search_tsqry, mitigation_sources, version))
+            
+    # order by match score and then Tech ID
+    results.sort(key=lambda t: (-t["score"], float(t["card_id_plain"][1:])))
+    
     # send results and what search was used for debugging purposes
     logger.info("sending search results")
     return jsonify(techniques=results, status=plain_rep(parsed_search.bool_expr, parsed_search.sym_to_term)), 200

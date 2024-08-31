@@ -283,28 +283,65 @@
             <div class="row">
                 <h2 class="visually-hidden">Search Result Cards</h2>
 
-                <template x-for="card in results" :key="card.tech_id_plain">
+                <template x-for="card in results" :key="card.card_id_plain">
                     <div
                         class="col-12"
                         style="padding: calc(var(--bs-gutter-x) * 0.5);"
                     >
-                        <div class="answer-card card h-100">
-                            <h3
-                                class="card-header fs-6"
-                                x-html="`${card.tech_name} [<a class='top-link' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
-                            ></h3>
+                        <template x-if="card.technique">
+                            <div class="answer-card technique-card card h-100">
+                                <h3
+                                    class="card-header fs-6"
+                                    x-html="`${card.tech_name} [<a class='top-link' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
+                                ></h3>
 
-                            <div class="card-body">
-                                <div class="card-text" x-html="card.description"></div>
-                            </a>
+                                <div class="card-body">
+                                    <div class="card-text" x-html="card.description"></div>
+                                </a>
 
-                            <a
-                                    class="link-strong-blue card-link stretched-link"
-                                    :href="resolveURL(card.internal_url)"
-                                    :aria-label="`Select Card ${card.tech_name_plain} ${card.tech_id_plain}`"
-                            ></a>
-                        </div>
+                                <a
+                                        class="link-strong-blue card-link stretched-link"
+                                        :href="resolveURL(card.internal_url)"
+                                        :aria-label="`Select Card ${card.tech_name_plain} ${card.card_id_plain}`"
+                                ></a>
+                            </div>
+                        </template>
+                        <template x-if="card.mitigation">
+                            <div class="answer-card mitigation-card card h-100">
+                                <h3
+                                    class="card-header fs-6"
+                                    x-html="`${card.mitigation_name}`"
+                                ></h3>
 
+                                <div class="card-body">
+                                    <div class="card-text" x-html="card.description"></div>
+                                </a>
+
+                                <a
+                                        class="link-strong-blue card-link stretched-link"
+                                        :href="resolveURL(card.internal_url)"
+                                        :aria-label="`Select Card ${card.mitigation_name_plain} ${card.card_id_plain}`"
+                                ></a>
+                            </div>
+                        </template>
+                        <template x-if="card.mitigation_use">
+                            <div class="answer-card mitigation-use-card card h-100">
+                                <h3
+                                    class="card-header fs-6"
+                                    x-html="`${card.mitigation_name} for ${card.technique_name}`"
+                                ></h3>
+    
+                                <div class="card-body">
+                                    <div class="card-text" x-html="card.use"></div>
+                                </a>
+    
+                                <a
+                                        class="link-strong-blue card-link stretched-link"
+                                        :href="resolveURL(card.internal_url)"
+                                        :aria-label="`Select Card ${card.mitigation_name_plain} ${card.card_id_plain}`"
+                                ></a>
+                            </div>
+                        </template>
                     </div>
                 </template>
 
