@@ -28,6 +28,7 @@ from app.models import (
     technique_platform_map,
     tactic_technique_map,
     technique_ds_map,
+    technique_mitigation_map
 )
 from app.routes.utils_db import VersionPicker
 from app.routes.utils import (
@@ -301,8 +302,7 @@ def technique_search(search_tsqry, tactics, version, platforms, data_sources):
             literal_column("ts_rank(tsvec, tsqry)").label("score"),
         ).filter(generate_existing.c.exists)
     )
-        
-    logger.debug(str(filter_and_scoreq.statement))
+
     filter_and_score = filter_and_scoreq.all()
 
     logger.debug(f"got {len(filter_and_score)} matching Techniques")
@@ -434,8 +434,8 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
             literal_column(search_tsqry).label("tsqry"),  # 2
         )
         .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
-        .filter(MitigationSource.attack_version == "v15.1")
-    ).subquery()    
+        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
+    ).subquery() 
 
     # get techniques matching search tsquery
     generate_existing = (db.session.query(mit_subq, literal_column("tsvec @@ tsqry").label("exists"))).subquery()
@@ -461,11 +461,10 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
             Mitigation.name,  # 1
             Mitigation.description,  # 2
             Mitigation.description,  # 3
-            func.array_agg(distinct(Tactic.tact_id)),  # 4
-            literal_column(search_tsqry).label("tsqry"),  # 5
+            literal_column(search_tsqry).label("tsqry"),  # 4
         )
         .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
-        .filter(MitigationSource.attack_version == version)
+        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
         .filter(Mitigation.mit_id.in_(list(mit_to_score.keys())))
         .group_by(Mitigation.uid)
     ).subquery()
@@ -502,7 +501,7 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
     result_q = (
         db.session.query(
             result_subq,
-            # 6, 7, 8, 9
+            # 5, 6, 7
             literal_column(PSQLTxt.basic_headline(PSQLTxt.zwspace_pad_special("mit_id"), "tsqry")).label("hl_id"),
             literal_column(PSQLTxt.basic_headline(PSQLTxt.unaccent("name"), "tsqry")).label("hl_name"),
             literal_column(tech_desc_headline).label("hl_desc")
@@ -516,7 +515,6 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
         mit_name,
         mit_desc,
         mit_url, #desc replica
-        _,  # tactic_ids
         _,  # tsqry
         hl_id,
         hl_name,
@@ -552,21 +550,146 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
 
 def mitigation_use_search(search_tsqry, mitigation_sources, version):
     results = []
-    results.append(
+    
+    tsvec = PSQLTxt.multiline_cleanup(
+        """
+        technique_mitigation_map.tech_mit_use_ts 
+    """
+    )
+
+    # filter Mitigations by Mitigation Source filters, then generate tsvecs for remaining
+    logger.debug("querying Technqiue Mitigations Use filtered by Mitigation Source, and Technique Version selections and ranked by relevance")
+    
+    mit_subq = (
+        db.session.query(
+            technique_mitigation_map.c.uid,  # 0
+            literal_column(tsvec).label("tsvec"),  # 1
+            literal_column(search_tsqry).label("tsqry"),  # 2
+        )
+        .join(Mitigation, Mitigation.uid == technique_mitigation_map.c.mitigation)
+        .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
+        .join(Technique, Technique.uid == technique_mitigation_map.c.technique)
+        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
+        .filter(Technique.attack_version == version)
+    ).subquery()    
+
+    # get techniques matching search tsquery
+    generate_existing = (db.session.query(mit_subq, literal_column("tsvec @@ tsqry").label("exists"))).subquery()
+
+    # filter non-matching and get scores - returns IDs and their scores, pull into dict
+    filter_and_scoreq = (
+        db.session.query(
+            generate_existing.c.uid,
+            literal_column("ts_rank(tsvec, tsqry)").label("score"),
+        ).filter(generate_existing.c.exists)
+    )
+    
+    print(str(filter_and_scoreq.statement))
+    filter_and_score = filter_and_scoreq.all()
+
+    print(f"got {len(filter_and_score)} matching Usees for Technique Mitigations")
+    mit_to_score = {mit: score for mit, score in filter_and_score}
+
+    # fetch details of matching mitigations
+    print("querying details for the earlier-matched Uses for Technique Mitigation")
+    result_subq = (
+        db.session.query(
+            technique_mitigation_map.c.uid,  # 0
+            technique_mitigation_map.c.use,  # 1
+            Technique.tech_id,  # 2
+            Technique.tech_name,  # 3
+            Mitigation.mit_id,  # 4
+            Mitigation.name,  # 5
+            literal_column(search_tsqry).label("tsqry"),  # 6
+        )
+        .join(Mitigation, Mitigation.uid == technique_mitigation_map.c.mitigation)
+        .join(Technique, Technique.uid == technique_mitigation_map.c.technique)
+        .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
+        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
+        .filter(technique_mitigation_map.c.uid.in_(list(mit_to_score.keys())))
+    ).subquery()
+
+    # processing tech desc for ts_headline is easier to read as multiple stages
+    s0 = PSQLTxt.unaccent("use")
+    s1 = PSQLTxt.no_html(s0)
+    s2 = PSQLTxt.no_citation_nums(s1)
+    s3 = PSQLTxt.no_md_urls(s2)
+    s4 = PSQLTxt.newlines_as_space(s3)
+    mit_tech_use_processed = PSQLTxt.zwspace_pad_special(s4)
+
+    mit_tech_use_headline = PSQLTxt.multiline_cleanup(
+        f"""
+        ts_headline(
+            'english_nostop',
+            {mit_tech_use_processed},
+            tsqry,
+            '
+                HighlightAll=false,
+                MinWords=1,
+                MaxWords=16,
+                MaxFragments=4,
+                FragmentDelimiter=<red>...</red><br>,
+                StartSel=<mark>,
+                StopSel=</mark>
+            '
+        )
+    """
+    )
+
+    result_q = (
+        db.session.query(
+            result_subq,
+            # 6, 7, 8, 9, 10
+            literal_column(PSQLTxt.basic_headline(PSQLTxt.zwspace_pad_special("mit_id"), "tsqry")).label("hl_mit_id"),
+            literal_column(PSQLTxt.basic_headline(PSQLTxt.unaccent("name"), "tsqry")).label("hl_mit_name"),
+            literal_column(PSQLTxt.basic_headline(PSQLTxt.zwspace_pad_special("tech_id"), "tsqry")).label("hl_tech_id"),
+            literal_column(PSQLTxt.basic_headline(PSQLTxt.unaccent("tech_name"), "tsqry")).label("hl_tech_name"),
+            literal_column(mit_tech_use_headline).label("hl_use")
+        )
+    ).all()
+
+    logger.debug("query finished")
+
+    # build response
+    for (
+        mit_tech_uid,
+        mit_tech_use,
+        tech_id,
+        tech_name,
+        mit_id,
+        mit_name,
+        _,  # tsqry
+        hl_mit_id,
+        hl_mit_name,
+        hl_tech_id,
+        hl_tech_name,
+        hl_use,
+    ) in result_q:
+        # for ts_headlined descriptions - finish off any ... between snippets
+        if len(hl_use) > 50:
+            tdesc = hl_use.replace("<red>", '<span class="redtext">').replace("</red>", "</span>")
+
+        # if no terms are matched in the description - get the first 250 chars, cut to last space, and add ... in red
+        else:
+            cleaned_desc = bleach.clean(markdown.markdown(hl_use), tags=[], strip=True)[:250]
+            cleaned_desc = cleaned_desc[: cleaned_desc.rfind(" ")]
+            tdesc = f'{cleaned_desc}<span class="redtext">...</span>'
+
+        results.append(
             {
                 "mitigation_use": True,
-                "tech_id": "T1876",
-                "mit_id": "M1098",
-                "card_id_plain": "1667.1098",
-                "technique_name": "Technique Name",
-                "mitigation_name": "Mitigation Name",
-                "use_name_plain": "Technique Name - Mitigation Name",
-                "use": "This is the use of a mitigation for a specific technique. It contains a lot of information about the mitigation and how it can be used to protect against attacks.",
+                "tech_id": hl_tech_id,
+                "mit_id": hl_mit_id,
+                "card_id_plain": hl_tech_name+". "+hl_mit_name,
+                "technique_name": hl_tech_name,
+                "mitigation_name": hl_mit_name,
+                "use_name_plain": hl_tech_name + " - " + hl_mit_name,
+                "use": hl_use,
                 "attack_url": "http://localhost/test",                
                 "internal_url": url_for(
                     "question_.notactic_success", version="v15.1", subpath="M1098".replace(".", "/")
                 ),
-                "score": 0.05,
+                "score": mit_to_score[mit_tech_uid],
             }
         )
     

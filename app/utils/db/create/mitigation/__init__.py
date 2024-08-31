@@ -94,6 +94,8 @@ def tech_mitigations_map(version, src_mgr):
     # get DataComponent -detects-> Technique rels
     mitigations: dict = src_mgr.mitigations[version].get_data()
 
+    next_technique_mitigation_uid = db_read.util.max_primary_key(technique_mitigation_map.c.uid) + 1
+    uid_offset = 0
     # get DB UID resolvers for Technique and DataComponent
     tech_id_to_uid = db_read.attack.tech_id_to_uid(version)
     mitigation_id_to_uid = db_read.mitigation.mit_id_to_uid(version)
@@ -116,7 +118,8 @@ def tech_mitigations_map(version, src_mgr):
 
             # if both Tech and DataComp exist in DB for this version, add their mapping
             if tech_uid and mit_uid:
-                tech_mit_map_rows.append({"technique": tech_uid, "mitigation": mit_uid, "use": tech_mit_use["use"]})
+                tech_mit_map_rows.append({"uid": next_technique_mitigation_uid+uid_offset ,"technique": tech_uid, "mitigation": mit_uid, "use": tech_mit_use["use"]})
+                uid_offset += 1
 
     # insert them
     db.session.execute(technique_mitigation_map.insert().values(tech_mit_map_rows))

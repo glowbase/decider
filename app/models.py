@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy_utils import EncryptedType
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, AesGcmEngine
+from sqlalchemy import UniqueConstraint
 
 from app.env_vars import CART_ENC_KEY
 
@@ -224,7 +225,9 @@ class MitigationSource(db.Model):
 
 technique_mitigation_map = db.Table(
     "technique_mitigation_map",
-    db.Column("technique", db.Integer, db.ForeignKey("technique.uid"), primary_key=True),
-    db.Column("mitigation", db.Integer, db.ForeignKey("mitigation.uid"), primary_key=True),
+    db.Column("uid", db.Integer, primary_key=True),
+    db.Column("technique", db.Integer, db.ForeignKey("technique.uid")),
+    db.Column("mitigation", db.Integer, db.ForeignKey("mitigation.uid")),
     db.Column("use", db.Text, nullable=True),
+    UniqueConstraint("technique", "mitigation", name="uix_1"),
 )

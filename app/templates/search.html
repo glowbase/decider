@@ -292,7 +292,7 @@
                             <div class="answer-card technique-card card h-100">
                                 <h3
                                     class="card-header fs-6"
-                                    x-html="`${card.tech_name} [<a class='top-link' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
+                                    x-html="`Technique: ${card.tech_name} [<a class='top-link' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
                                 ></h3>
 
                                 <div class="card-body">
@@ -310,7 +310,7 @@
                             <div class="answer-card mitigation-card card h-100">
                                 <h3
                                     class="card-header fs-6"
-                                    x-html="`${card.mitigation_name}`"
+                                    x-html="`Mitigation: ${card.mitigation_name}`"
                                 ></h3>
 
                                 <div class="card-body">
@@ -328,7 +328,7 @@
                             <div class="answer-card mitigation-use-card card h-100">
                                 <h3
                                     class="card-header fs-6"
-                                    x-html="`${card.mitigation_name} for ${card.technique_name}`"
+                                    x-html="`Mitigation Use: ${card.use_name_plain}`"
                                 ></h3>
     
                                 <div class="card-body">
@@ -338,7 +338,7 @@
                                 <a
                                         class="link-strong-blue card-link stretched-link"
                                         :href="resolveURL(card.internal_url)"
-                                        :aria-label="`Select Card ${card.mitigation_name_plain} ${card.card_id_plain}`"
+                                        :aria-label="`Select Card ${card.use_name_plain} ${card.card_id_plain}`"
                                 ></a>
                             </div>
                         </template>
