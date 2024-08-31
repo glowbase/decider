@@ -352,6 +352,7 @@ strong {
 }
 
 .card-header {
+    color: #fff;
     padding: 8px !important;
     font-size: 17px !important;
     font-weight: bold;
@@ -386,25 +387,36 @@ strong {
     text-decoration-style: solid;
     text-decoration-skip-ink: none;
 }
-
 .answer-card {
     --bs-card-inner-border-radius: 0;
     --bs-card-border-radius: 0;
 
     --bs-card-cap-color: black;
-    --bs-card-cap-bg: var(--dhs-gray-20);
 
     --bs-card-border-color: var(--dhs-gray);
 
     --bs-card-color: black;
     --bs-card-bg: var(--dhs-blue-60);
 }
+
+.answer-card.technique-card{
+    --bs-card-cap-bg: var(--dhs-green);
+}
+
+.answer-card.mitigation-card {
+    --bs-card-cap-bg: var(--dhs-red);
+}
+
+.answer-card.mitigation-use-card {
+    --bs-card-cap-bg: var(--dhs-light-blue);
+}
+
 .answer-card .card-header {
     padding: calc(var(--bs-card-cap-padding-y) * 0.4) calc(var(--bs-card-cap-padding-x) * 0.4);
 }
 .answer-card .card-footer {
     padding: calc(var(--bs-card-cap-padding-y) * 0.4) calc(var(--bs-card-cap-padding-x) * 0.4);
-}
+} 
 .answer-card code {
     color: rgb(70 150 0);
 }

@@ -1,3 +1,5 @@
+from . import postbuild
+
 from app.models import (
     db,
     Technique,
@@ -92,6 +94,8 @@ def tech_mitigations_map(version, src_mgr):
     # get DataComponent -detects-> Technique rels
     mitigations: dict = src_mgr.mitigations[version].get_data()
 
+    next_technique_mitigation_uid = db_read.util.max_primary_key(technique_mitigation_map.c.uid) + 1
+    uid_offset = 0
     # get DB UID resolvers for Technique and DataComponent
     tech_id_to_uid = db_read.attack.tech_id_to_uid(version)
     mitigation_id_to_uid = db_read.mitigation.mit_id_to_uid(version)
@@ -114,7 +118,8 @@ def tech_mitigations_map(version, src_mgr):
 
             # if both Tech and DataComp exist in DB for this version, add their mapping
             if tech_uid and mit_uid:
-                tech_mit_map_rows.append({"technique": tech_uid, "mitigation": mit_uid, "use": tech_mit_use["use"]})
+                tech_mit_map_rows.append({"uid": next_technique_mitigation_uid+uid_offset ,"technique": tech_uid, "mitigation": mit_uid, "use": tech_mit_use["use"]})
+                uid_offset += 1
 
     # insert them
     db.session.execute(technique_mitigation_map.insert().values(tech_mit_map_rows))
@@ -129,3 +134,7 @@ def add_version(version, src_mgr):
     base_version_num = int(version.replace("v", "").split(".")[0])  # [8], v[8], v[9], v[9].1, v[9].2
     if base_version_num >= 15:
         db_create.mitigation.tech_mitigations_map(version, src_mgr)
+
+    # Ensures generated TS vector and index exists for Mitigations and Mitigation Uses
+    db_create.mitigation.postbuild.add_mitigation_search_index()
+    db_create.mitigation.postbuild.add_technique_mitigation_use_search_index()
