@@ -1,3 +1,5 @@
+from . import postbuild
+
 from app.models import (
     db,
     Technique,
@@ -129,3 +131,7 @@ def add_version(version, src_mgr):
     base_version_num = int(version.replace("v", "").split(".")[0])  # [8], v[8], v[9], v[9].1, v[9].2
     if base_version_num >= 15:
         db_create.mitigation.tech_mitigations_map(version, src_mgr)
+
+    # Ensures generated TS vector and index exists for Mitigations and Mitigation Uses
+    db_create.mitigation.postbuild.add_mitigation_search_index()
+    db_create.mitigation.postbuild.add_technique_mitigation_use_search_index()
