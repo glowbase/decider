@@ -155,7 +155,7 @@
         <h2 class="fs-3">Remediation</h2>
         <template x-for="(mit_set, index) in $store.success.mitigations">
             <span>
-                <h3 class="fs-4"><span x-text="index"></span></h3>
+                <h3 class="fs-4"><span x-text="mit_set[0].source_display_name"></span></h3>
                 <table class="table has-strong-codes has-strong-blue-links">
                     <thead>
                         <tr>
