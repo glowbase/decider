@@ -82,6 +82,7 @@ def kiosk_user():
         GRANT SELECT ON data_source TO {db_kiosk_name};
         GRANT SELECT ON data_component TO {db_kiosk_name};
         GRANT SELECT ON mitigation TO {db_kiosk_name};
+        GRANT SELECT ON mitigation_source TO {db_kiosk_name};
         GRANT SELECT ON technique_mitigation_map TO {db_kiosk_name};
         """
     )

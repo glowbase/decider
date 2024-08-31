@@ -1,10 +1,14 @@
+import bleach
 import logging
+import markdown
+import re
+
+from flask import Blueprint, request, render_template, jsonify, g, make_response, url_for
+
 from sqlalchemy.sql.expression import distinct
 from sqlalchemy.sql.functions import func
 from sqlalchemy import REAL, literal_column, String, or_, and_
 from sqlalchemy.orm.util import aliased
-
-from flask import Blueprint, request, render_template, jsonify, g, make_response, url_for
 
 from app.models import (
     db,
@@ -12,15 +16,17 @@ from app.models import (
     Technique,
     Aka,
     DataSource,
+    Platform
 )
+
+from app.domain import PSQLTxt
+from app.domain.search_service import technique_search_args_are_valid, parse_search_str, tsqry_rep, plain_rep
 from app.models import (
     technique_aka_map,
     technique_platform_map,
     tactic_technique_map,
     technique_ds_map,
 )
-from app.models import Platform
-
 from app.routes.utils_db import VersionPicker
 from app.routes.utils import (
     is_attack_version,
@@ -30,17 +36,8 @@ from app.routes.utils import (
 )
 from app.routes.utils import ErrorDuringHTMLRoute, ErrorDuringAJAXRoute, wrap_exceptions_as
 
-from dataclasses import dataclass
-from typing import Dict, Tuple, Union
-from boolean import boolean
-
-import re
-import markdown
-import bleach
-
 logger = logging.getLogger(__name__)
 search_ = Blueprint("search_", __name__, template_folder="templates")
-
 
 @search_.route("/search/mini/<version>", methods=["POST"])
 @wrap_exceptions_as(ErrorDuringAJAXRoute)
@@ -110,54 +107,6 @@ def mini_search(version):
     logger.info("sending search results to user")
     return jsonify(dictified), 200
 
-
-def technique_search_args_are_valid(version, query, tactics, platforms, data_sources):
-    """Validates the attempted arguments for a technique search request
-
-    - pulled-out to prevent an overly-long function
-
-    returns bool on if the arguments pass or not
-    """
-
-    # required fields missing
-    if (version is None) or (query is None):
-        logger.error("request malformed - missing required field(s)")
-        return False
-
-    # check version validity & get DB model
-    version_pick = VersionPicker(version=version)
-    if not version_pick.is_valid:
-        logger.error("request malformed - version specified isn't on server")
-        return False
-    ver_model = version_pick.cur_version_model
-
-    # ensure that specified tactics exist
-    logger.debug(f"querying Tactics in ATT&CK {version} (to validate request)")
-    valid_tactics = {t.tact_name.replace(" ", "_").lower() for t in ver_model.tactics}
-    specified_tactics = set(tactics)
-    if len(specified_tactics) != len(specified_tactics.intersection(valid_tactics)):
-        logger.error("request malformed - tactic(s) specified aren't in version")
-        return False
-
-    # ensure that specified platforms exist
-    logger.debug(f"querying Platforms in ATT&CK {version} (to validate request)")
-    valid_platforms = {p.internal_name for p in ver_model.platforms}
-    specified_platforms = set(platforms)
-    if len(specified_platforms) != len(specified_platforms.intersection(valid_platforms)):
-        logger.error("request malformed - platform(s) specified aren't in version")
-        return False
-
-    # ensure that specified data sources exist
-    logger.debug(f"querying Data Sources in ATT&CK {version} (to validate request)")
-    valid_data_sources = {s.internal_name for s in ver_model.data_sources}
-    specified_data_sources = set(data_sources)
-    if len(specified_data_sources) != len(specified_data_sources.intersection(valid_data_sources)):
-        logger.error("request malformed - data source(s) specified aren't in version")
-        return False
-
-    return True  # all passed
-
-
 @search_.route("/search/page", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringHTMLRoute)
 def search_page():
@@ -175,9 +124,10 @@ def search_page():
     version = request.args.get("version")
     search_str = request.args.get("search")
     tactics = request.args.getlist("tactics")
+    mitigation_sources = request.args.getlist("mitigation_sources")
     platforms = request.args.getlist("platforms")
     data_sources = request.args.getlist("data_sources")
-    if not technique_search_args_are_valid(version, search_str, tactics, platforms, data_sources):
+    if not technique_search_args_are_valid(version, search_str, tactics, mitigation_sources, platforms, data_sources):
         # technique_search_args_are_valid has the error log action - this just shows a 404 will be sent
         logger.debug("request malformed - serving them a 404 page")
         return (
@@ -207,6 +157,18 @@ def search_page():
     logger.debug(f"querying Data Sources in ATT&CK {ver_name} for filters")
     data_source_names = [d.readable_name for d in ver_model.data_sources]
 
+    #############################################
+    #############################################
+    ## Needs to come from the database
+    ## Will require an update to the db import to
+    ## include the Mitigation_Source table
+    
+    #logger.debug(f"querying Mitigation Sources in ATT&CK {ver_name} for filters")
+    mitigation_source_names = ["MITRE", "ISM", "NIST"]
+    #############################################
+    #############################################
+    
+
     tactic_filters = checkbox_filters_component(
         "tactic_fs",
         tactic_names,
@@ -228,244 +190,20 @@ def search_page():
         "searchUpdateDataSources(this)",
         different_name="Data Source",
     )
+    mitigation_source_filters = checkbox_filters_component(
+        "mitigation_source_fs",
+        mitigation_source_names,
+        "searchClearMitigationSources()",
+        "searchUpdateMitigationSources(this)",
+        different_name="Mitigation Source",
+    )
 
     response = make_response(
-        render_template("search.html", **tactic_filters, **platform_filters, **data_source_filters)
+        render_template("search.html", **tactic_filters, **platform_filters, **data_source_filters, **mitigation_source_filters)
     )
 
     logger.info("serving page")
     return response
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-
-@dataclass
-class ParsedSearchString:
-    """
-    Represents a parsed search string
-    - (parse success) holds a boolean representation of the search and a symbol lookup table
-    - (parse failure) holds a string explaining the parse issue
-    - bool_expr is a BooleanAlgebra expression of symbols 's0', 's1',.. 'sN' (easy to process recursively)
-    - sym_to_term is a dict mapping symbols to search terms and if they're prefix-matched 's0' -> ('bios', False)
-    """
-
-    # success
-    bool_expr: Union[boolean.Expression, None] = None
-    sym_to_term: Union[Dict[str, Tuple[str, bool]], None] = None
-
-    # failure
-    error: Union[str, None] = None
-
-
-def parse_search_str(search: str, joiner: str = "&") -> ParsedSearchString:
-    """Converts a boolean search string into a boolean expression
-
-    search: a user-entered search string that can include boolean operators, prefix-matching, and quoted phrases
-    joiner: boolean operator to combine adjacent terms with
-    - '&' AND is default
-    - '|' OR is also an option
-
-    sets ParsedSearchString.error if the boolean expression is invalid or if there isn't at least one a-zA-Z0-9 term
-    """
-
-    term_pattern = r'("[^"]+"\*?|[^\(\)\|\&\~"\* ]+\*?)'
-
-    # pull terms from search string and process
-    terms = re.findall(term_pattern, search)
-    sym_to_term = {}
-    for num, t in enumerate(terms):
-        # note if prefix-matching enabled, remove indicator if present
-        prefix = t[-1] == "*"
-        if prefix:
-            t = t[:-1]
-
-        # remove quotes if term was quoted
-        if t[0] == '"':
-            t = t[1:-1]
-
-        # remove and collapse any non-alphanumerics, Error on term with no alphanum content
-        t = re.sub("[^A-Za-z0-9]+", " ", t).strip()
-        if not t:
-            return ParsedSearchString(error="Term must have at-least one A-Za-z0-9 character")
-
-        # store term and if prefix-match is enabled
-        sym_to_term[f"s{num}"] = (t, prefix)
-
-    # replace all terms with 's', then remove any spaces
-    expr = re.sub(term_pattern, "s", search)
-    expr = re.sub(" +", "", expr)
-
-    # replace all 's' with 's0', 's1', .., 'sN'
-    lexpr = list(expr)
-    num = 0
-    for ind, char in enumerate(lexpr):
-        if char == "s":
-            lexpr[ind] = f"s{num}"
-            num += 1
-    expr = "".join(lexpr)
-
-    # insert & between adjacent symbols / parents, 2 times for trivial overlap handling
-    for _ in range(2):
-        expr = re.sub(r"(s[0-9]+)(~?s[0-9]+)", rf"\1{joiner}\2", expr)  # SymSym -> Sym&Sym
-        expr = re.sub(r"(s[0-9]+)(~?\()", rf"\1{joiner}\2", expr)  # Sym( -> Sym&(
-        expr = re.sub(r"(\))(~?s[0-9]+)", rf"\1{joiner}\2", expr)  # )Sym -> )&Sym
-        expr = re.sub(r"(\))(~?\()", rf"\1{joiner}\2", expr)  # )( -> )&(
-
-    # collapse double negatives
-    while "~~" in expr:
-        expr = expr.replace("~~", "")
-
-    # attempt to interpret search expression in boolean alg library
-    try:
-        bool_expr = boolean.BooleanAlgebra().parse(expr)
-    except Exception:
-        return ParsedSearchString(error="Search query is formatted improperly")
-
-    return ParsedSearchString(bool_expr=bool_expr, sym_to_term=sym_to_term)
-
-
-def tsqry_rep(bexpr, sym_terms):
-    """Creates a ts_query representation from the output of parse_search_str(sstr)
-
-    Input: (bool_expr, sym_to_term)
-    - see what parse_search_str(sstr) returns for info on this tuple
-
-    returns a string that is valid PostgreSQL which forms a ts_query of the search string
-    """
-
-    # base symbol
-    if isinstance(bexpr, boolean.Symbol):
-        term, prefix = sym_terms[bexpr.obj]
-
-        # is a phrase, join with <->, add prefix-match to all parts if specified
-        if " " in term:
-            term = " <-> ".join(f'{part}{":*" if prefix else ""}' for part in term.split())
-
-        # is a single word, add prefix-match if specified
-        else:
-            term = f'{term}{":*" if prefix else ""}'
-
-        escaped_term = String("").literal_processor(dialect=db.session.get_bind().dialect)(value=term)
-        return f"to_tsquery('english_nostop', {escaped_term})"
-
-    # and together
-    elif isinstance(bexpr, boolean.AND):
-        anded = " && ".join(tsqry_rep(sym, sym_terms) for sym in bexpr.args)
-        return f"({anded})"
-
-    # or together
-    elif isinstance(bexpr, boolean.OR):
-        ored = " || ".join(tsqry_rep(sym, sym_terms) for sym in bexpr.args)
-        return f"({ored})"
-
-    # negate
-    elif isinstance(bexpr, boolean.NOT):
-        return f"!!({tsqry_rep(bexpr.args[0], sym_terms)})"
-
-
-def plain_rep(bexpr, sym_terms):
-    """Creates a human-readable representation from the output of parse_search_str(sstr)
-
-    closely related to tsqry_rep(bexpr, sym_terms):
-    - this generates a string for a human to read.
-    - tsqry_rep generates a string for PostgreSQL to read.
-
-    Input: (bool_expr, sym_to_term)
-    - see what parse_search_str(sstr) returns for info on this tuple
-
-    returns a string that is a human-readable boolean search expression based on the search string they entered
-    - this string is presented under the full Technique search entry box
-    - showing the user how the expression was interpreted could help with issues regarding boolean order-of-operations
-    - showing how the expression is interpreted also gives the user insight into how text is broke into tokens
-    """
-
-    # INPUT: (output of parse_search_str, this also recurses)
-    # OUTPUT: a human-readable string of the search used internally
-
-    # base symbol
-    if isinstance(bexpr, boolean.Symbol):
-        term, prefix = sym_terms[bexpr.obj]
-
-        # is a phrase, join with <->, add prefix-match to all parts if specified
-        if " " in term:
-            term = " ".join(f'{part}{"*" if prefix else ""}' for part in term.split())
-            term = f'"{term}"'
-
-        # is a single word, add prefix-match if specified
-        else:
-            term = f'{term}{"*" if prefix else ""}'
-
-        return term
-
-    # and together
-    elif isinstance(bexpr, boolean.AND):
-        anded = " & ".join(plain_rep(sym, sym_terms) for sym in bexpr.args)
-        return f"({anded})"
-
-    # or together
-    elif isinstance(bexpr, boolean.OR):
-        ored = " | ".join(plain_rep(sym, sym_terms) for sym in bexpr.args)
-        return f"({ored})"
-
-    # negate
-    elif isinstance(bexpr, boolean.NOT):
-        return "~" + plain_rep(bexpr.args[0], sym_terms)
-
-
-class PSQLTxt:
-    """Set of PostgreSQL (+ general) text functions for succinct composition of queries"""
-
-    @staticmethod
-    def no_html(txt):
-        return rf"regexp_replace({txt}, '<\/?(sup|a|code)[^>]*>', '', 'gi')"
-
-    @staticmethod
-    def no_md_urls(txt):
-        return rf"regexp_replace({txt}, '\[([^\]]+)\]\([^\)]+\)', '\1', 'gi')"
-
-    @staticmethod
-    def unaccent(txt):
-        return f"unaccent({txt})"
-
-    @staticmethod
-    def only_alnum(txt):
-        return f"regexp_replace({txt}, '[^a-z0-9 ]+', ' ', 'gi')"
-
-    @staticmethod
-    def to_tsvec(txt):
-        return f"to_tsvector('english_nostop', {txt})"
-
-    @staticmethod
-    def concat_spaced(txts):
-        return " || ' ' || ".join(txts)
-
-    @staticmethod
-    def zwspace_pad_special(txt):
-        """Surrounds runs of special characters with hair-spaces
-            - Splits on specials as a form of tokenization
-            - Minimally alters visual output
-        """
-        return f"regexp_replace({txt}, '([^a-z0-9 ]+)', '\u200A\\1\u200A', 'gi')"
-
-    @staticmethod
-    def basic_headline(txt, qry):
-        return f"ts_headline('english_nostop', {txt}, {qry}, 'HighlightAll=true,StartSel=<mark>,StopSel=</mark>')"
-
-    @staticmethod
-    def no_citation_nums(txt):
-        return rf"regexp_replace({txt}, '\[[0-9]{{1,2}}\]', '', 'gi')"
-
-    @staticmethod
-    def newlines_as_space(txt):
-        return rf"regexp_replace({txt}, '(\n)+', ' ', 'gi')"
-
-    @staticmethod
-    def multiline_cleanup(qry):
-        stripped_lines = [ln.strip() for ln in qry.split("\n")]
-        nonempty_lines = [ln for ln in stripped_lines if ln]
-        return "".join(nonempty_lines)
-
 
 @search_.route("/search/full", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringAJAXRoute)
@@ -517,9 +255,11 @@ def full_search():
     version = request.args.get("version")
     search_str = request.args.get("search")
     tactics = request.args.getlist("tactics")
+    mitigation_sources = request.args.getlist("mitigation_sources")
     platforms = request.args.getlist("platforms")
     data_sources = request.args.getlist("data_sources")
-    if not technique_search_args_are_valid(version, search_str, tactics, platforms, data_sources):
+
+    if not technique_search_args_are_valid(version, search_str, tactics, mitigation_sources, platforms, data_sources):
         # technique_search_args_are_valid has the error log action - this just shows a 400 will be sent
         logger.debug("request malformed - serving them a 400 code")
         return jsonify(message="Invalid search parameters"), 400
@@ -542,8 +282,8 @@ def full_search():
             return jsonify(status=parsed_search.error), 200
 
     # unexpected error -> generic response
-    except Exception:
-        logger.info("request skipped - they typed an invalid search query (unexpected error)")
+    except Exception as e:
+        logger.exception("request skipped - they typed an invalid search query (unexpected error)", exc_info=e)
         return jsonify(status="Unable to parse the provided search query"), 200
 
     search_tsqry = tsqry_rep(parsed_search.bool_expr, parsed_search.sym_to_term)
@@ -586,17 +326,22 @@ def full_search():
         .outerjoin(technique_aka_map, Technique.uid == technique_aka_map.c.technique)
         .outerjoin(Aka, Aka.uid == technique_aka_map.c.aka)
     ).subquery()
+    
 
     # get techniques matching search tsquery
     generate_existing = (db.session.query(tech_subq, literal_column("tsvec @@ tsqry").label("exists"))).subquery()
 
     # filter non-matching and get scores - returns IDs and their scores, pull into dict
-    filter_and_score = (
+    filter_and_scoreq = (
         db.session.query(
             generate_existing.c.tech_id,
             literal_column("ts_rank(tsvec, tsqry)").label("score"),
         ).filter(generate_existing.c.exists)
-    ).all()
+    )
+        
+    logger.debug(str(filter_and_scoreq.statement))
+    filter_and_score = filter_and_scoreq.all()
+
     logger.debug(f"got {len(filter_and_score)} matching Techniques")
     tech_to_score = {tech: score for tech, score in filter_and_score}
 
@@ -710,7 +455,6 @@ def full_search():
     # send results and what search was used for debugging purposes
     logger.info("sending search results")
     return jsonify(techniques=results, status=plain_rep(parsed_search.bool_expr, parsed_search.sym_to_term)), 200
-
 
 @search_.route("/search/answer_cards", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringAJAXRoute)

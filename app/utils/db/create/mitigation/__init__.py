@@ -3,6 +3,7 @@ from app.models import (
     Technique,
     technique_mitigation_map,
     Mitigation,
+    MitigationSource,
     AttackVersion,
 )
 
@@ -15,21 +16,54 @@ from app.utils.db.util import messaged_timer
 
 from collections import defaultdict
 
+@messaged_timer("Building MitigationSource table")
+def mitigation_sources_table(version, src_mgr):
+        # query data components from ATT&CK
+        mitigation_sources = src_mgr.mitigation_sources.get_data()[version]
+        source_rows = []
+    
+        # determine where they'll be inserted
+        next_mitigation_source_uid = db_read.util.max_primary_key(MitigationSource.uid) + 1
+        uid_offset = 0
+    
+        # create the data components
+        for mtg in mitigation_sources:
+            source_rows.append(
+                {
+                    # fmt: off
+                    "uid"           : next_mitigation_source_uid + uid_offset,
+                    "source"        : mtg["source"],
+                    "name"          : mtg["name"],
+                    "description"   : mtg["description"],
+                    "display_name"  : mtg["display_name"],
+                    "url"           : mtg["url"],
+                    "attack_version": version,
+                    # fmt: on
+                }
+            )
+            uid_offset += 1
+    
+        # insert them
+        db.session.bulk_insert_mappings(MitigationSource, source_rows, render_nulls=True)
+        db.session.commit()
+
 @messaged_timer("Building Mitigations table")
 def mitigations_table(version, src_mgr):
 
     # query data components from ATT&CK
     mitigation_mappings: dict = src_mgr.mitigations[version].get_data()
     mitigation_list = []
-
     mitigation_rows = []
+
     # determine where they'll be inserted
     next_mitigation_uid = db_read.util.max_primary_key(Mitigation.uid) + 1
+    mitigation_sources_id_to_uid = db_read.mitigation.mit_src_to_uid(version)
     uid_offset = 0
 
     # create the data components
     for index, mit_id in enumerate(mitigation_mappings):
         mtg = mitigation_mappings[mit_id]
+        mtg_source = mtg["source"]
 
         mitigation_rows.append(
             {
@@ -38,7 +72,7 @@ def mitigations_table(version, src_mgr):
                 "name"          : mtg["name"],
                 "attack_version": version,
                 "mit_id"        : mit_id,
-                "source"        : mtg["source"],
+                "mitigation_source" : mitigation_sources_id_to_uid[mtg_source],
                 "description"   : mtg["description"],
                 # fmt: on
             }
@@ -88,6 +122,7 @@ def tech_mitigations_map(version, src_mgr):
 
 def add_version(version, src_mgr):
     # mitigations
+    db_create.mitigation.mitigation_sources_table(version, src_mgr)
     db_create.mitigation.mitigations_table(version, src_mgr)
 
     # Data Components & Sources for ATT&CK 10+

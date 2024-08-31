@@ -206,16 +206,22 @@ class DataComponent(db.Model):
     readable_name = db.Column(db.Text, nullable=False)
 
 # Mitigation Mapping Tables
-
 class Mitigation(db.Model):
     uid = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text)
-    attack_version = db.Column(db.Text, db.ForeignKey("attack_version.version"), nullable=False)
     mit_id= db.Column(db.Text, nullable=False)
-    source= db.Column(db.Text, nullable=False)
+    mitigation_source = db.Column(db.Integer, db.ForeignKey("mitigation_source.uid"), nullable=False)
     description = db.Column(db.Text, nullable=True)
 
-    
+class MitigationSource(db.Model):
+    uid = db.Column(db.Integer, primary_key=True)
+    source = db.Column(db.Text)
+    name = db.Column(db.Text)
+    description = db.Column(db.Text)
+    display_name = db.Column(db.Text)
+    url= db.Column(db.Text)
+    attack_version = db.Column(db.Text, db.ForeignKey("attack_version.version"), nullable=False)
+
 technique_mitigation_map = db.Table(
     "technique_mitigation_map",
     db.Column("technique", db.Integer, db.ForeignKey("technique.uid"), primary_key=True),

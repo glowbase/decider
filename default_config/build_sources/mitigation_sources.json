@@ -1,0 +1,25 @@
+{
+    "v15.1": [
+        { 
+               "source": "ISM", 
+               "display_name": "ISM", 
+               "name": "Information Security Manual",
+               "description": "Australian Government Information Security Manual", 
+               "url": "https://www.cyber.gov.au/ism"
+            },
+            { 
+                "source": "MITRE",
+                "display_name": "MITRE",
+                "name": "MITRE",
+                "description": "MITRE Corporation",
+                "url": "https://www.mitre.org/"
+            },
+            { 
+                "source": "NIST",
+                "display_name": "NIST 800-53",
+                "name": "NIST",
+                "description": "National Institute of Standards and Technology",
+                "url": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final"
+            }
+        ]
+}
