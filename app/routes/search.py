@@ -461,12 +461,12 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
             Mitigation.name,  # 1
             Mitigation.description,  # 2
             Mitigation.description,  # 3
-            literal_column(search_tsqry).label("tsqry"),  # 4
+            MitigationSource.display_name,  # 4
+            literal_column(search_tsqry).label("tsqry"),  # 5
         )
         .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
         .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
         .filter(Mitigation.mit_id.in_(list(mit_to_score.keys())))
-        .group_by(Mitigation.uid)
     ).subquery()
 
     # generate highlights for ID, Name, Description
@@ -515,6 +515,7 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
         mit_name,
         mit_desc,
         mit_url, #desc replica
+        mit_src_display_name,
         _,  # tsqry
         hl_id,
         hl_name,
@@ -535,6 +536,7 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
                 "mitigation": True,
                 "mit_id": hl_id,
                 "card_id_plain": mit_id,
+                "mit_src_display_name": mit_src_display_name,
                 "mitigation_name": hl_name,
                 "mitigation_name_plain": mit_name,
                 "description": tdesc,
@@ -600,7 +602,8 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
             Technique.tech_name,  # 3
             Mitigation.mit_id,  # 4
             Mitigation.name,  # 5
-            literal_column(search_tsqry).label("tsqry"),  # 6
+            MitigationSource.display_name,  # 6
+            literal_column(search_tsqry).label("tsqry"),  # 7
         )
         .join(Mitigation, Mitigation.uid == technique_mitigation_map.c.mitigation)
         .join(Technique, Technique.uid == technique_mitigation_map.c.technique)
@@ -658,6 +661,7 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
         tech_name,
         mit_id,
         mit_name,
+        mit_src_display_name,
         _,  # tsqry
         hl_mit_id,
         hl_mit_name,
@@ -680,10 +684,11 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
                 "mitigation_use": True,
                 "tech_id": hl_tech_id,
                 "mit_id": hl_mit_id,
+                "mit_src_display_name": mit_src_display_name,
                 "card_id_plain": hl_tech_name+". "+hl_mit_name,
                 "technique_name": hl_tech_name,
                 "mitigation_name": hl_mit_name,
-                "use_name_plain": hl_tech_name + " - " + hl_mit_name,
+                "use_name_plain": hl_tech_name +"("+tech_id+")" + " - " + hl_mit_name +"("+ mit_id+")",
                 "use": hl_use,
                 "attack_url": "http://localhost/test",                
                 "internal_url": url_for(

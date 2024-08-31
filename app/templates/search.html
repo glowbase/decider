@@ -310,7 +310,7 @@
                             <div class="answer-card mitigation-card card h-100">
                                 <h3
                                     class="card-header fs-6"
-                                    x-html="`Mitigation: ${card.mitigation_name}`"
+                                    x-html="`Mitigation: ${card.mitigation_name} [${card.card_id_plain}]`"
                                 ></h3>
 
                                 <div class="card-body">
@@ -328,7 +328,7 @@
                             <div class="answer-card mitigation-use-card card h-100">
                                 <h3
                                     class="card-header fs-6"
-                                    x-html="`Mitigation Use: ${card.use_name_plain}`"
+                                    x-html="`Mitigation Use: (${card.card_id_plain}) [${card.mit_src_display_name}]`"
                                 ></h3>
     
                                 <div class="card-body">
