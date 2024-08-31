@@ -16,7 +16,9 @@ from app.models import (
     Technique,
     Aka,
     DataSource,
-    Platform
+    Platform,
+    Mitigation,
+    MitigationSource
 )
 
 from app.domain import PSQLTxt
@@ -415,19 +417,134 @@ def technique_search(search_tsqry, tactics, version, platforms, data_sources):
 
 def mitigation_search(search_tsqry, mitigation_sources, version):
     results = []
-    results.append(
+    
+    tsvec = PSQLTxt.multiline_cleanup(
+        """
+        mitigation.mit_ts 
+    """
+    )
+
+    # filter Mitigations by Mitigation Source filters, then generate tsvecs for remaining
+    logger.debug("querying Mitigations filtered by Mitigation Source selections and ranked by relevance")
+    
+    mit_subq = (
+        db.session.query(
+            Mitigation.mit_id,  # 0
+            literal_column(tsvec).label("tsvec"),  # 1
+            literal_column(search_tsqry).label("tsqry"),  # 2
+        )
+        .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
+        .filter(MitigationSource.attack_version == "v15.1")
+    ).subquery()    
+
+    # get techniques matching search tsquery
+    generate_existing = (db.session.query(mit_subq, literal_column("tsvec @@ tsqry").label("exists"))).subquery()
+
+    # filter non-matching and get scores - returns IDs and their scores, pull into dict
+    filter_and_scoreq = (
+        db.session.query(
+            generate_existing.c.mit_id,
+            literal_column("ts_rank(tsvec, tsqry)").label("score"),
+        ).filter(generate_existing.c.exists)
+    )
+        
+    filter_and_score = filter_and_scoreq.all()
+
+    logger.debug(f"got {len(filter_and_score)} matching Mitigations")
+    mit_to_score = {mit: score for mit, score in filter_and_score}
+
+    # fetch details of matching mitigations
+    logger.debug("querying details for the earlier-matched Mitigations")
+    result_subq = (
+        db.session.query(
+            Mitigation.mit_id,  # 0
+            Mitigation.name,  # 1
+            Mitigation.description,  # 2
+            Mitigation.description,  # 3
+            func.array_agg(distinct(Tactic.tact_id)),  # 4
+            literal_column(search_tsqry).label("tsqry"),  # 5
+        )
+        .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
+        .filter(MitigationSource.attack_version == version)
+        .filter(Mitigation.mit_id.in_(list(mit_to_score.keys())))
+        .group_by(Mitigation.uid)
+    ).subquery()
+
+    # generate highlights for ID, Name, Description
+
+    # processing tech desc for ts_headline is easier to read as multiple stages
+    s0 = PSQLTxt.unaccent("description")
+    s1 = PSQLTxt.no_html(s0)
+    s2 = PSQLTxt.no_citation_nums(s1)
+    s3 = PSQLTxt.no_md_urls(s2)
+    s4 = PSQLTxt.newlines_as_space(s3)
+    tech_desc_processed = PSQLTxt.zwspace_pad_special(s4)
+
+    tech_desc_headline = PSQLTxt.multiline_cleanup(
+        f"""
+        ts_headline(
+            'english_nostop',
+            {tech_desc_processed},
+            tsqry,
+            '
+                HighlightAll=false,
+                MinWords=1,
+                MaxWords=16,
+                MaxFragments=4,
+                FragmentDelimiter=<red>...</red><br>,
+                StartSel=<mark>,
+                StopSel=</mark>
+            '
+        )
+    """
+    )
+
+    result_q = (
+        db.session.query(
+            result_subq,
+            # 6, 7, 8, 9
+            literal_column(PSQLTxt.basic_headline(PSQLTxt.zwspace_pad_special("mit_id"), "tsqry")).label("hl_id"),
+            literal_column(PSQLTxt.basic_headline(PSQLTxt.unaccent("name"), "tsqry")).label("hl_name"),
+            literal_column(tech_desc_headline).label("hl_desc")
+        )
+    ).all()
+    logger.debug("query finished")
+
+    # build response
+    for (
+        mit_id,
+        mit_name,
+        mit_desc,
+        mit_url, #desc replica
+        _,  # tactic_ids
+        _,  # tsqry
+        hl_id,
+        hl_name,
+        hl_desc,
+    ) in result_q:
+        # for ts_headlined descriptions - finish off any ... between snippets
+        if len(hl_desc) > 50:
+            tdesc = hl_desc.replace("<red>", '<span class="redtext">').replace("</red>", "</span>")
+
+        # if no terms are matched in the description - get the first 250 chars, cut to last space, and add ... in red
+        else:
+            cleaned_desc = bleach.clean(markdown.markdown(mit_desc), tags=[], strip=True)[:250]
+            cleaned_desc = cleaned_desc[: cleaned_desc.rfind(" ")]
+            tdesc = f'{cleaned_desc}<span class="redtext">...</span>'
+
+        results.append(
             {
                 "mitigation": True,
-                "mit_id": "M1098",
-                "card_id_plain": "1098",
-                "mitigation_name": "Mitigation Name",
-                "mitigation_name_plain": "Mitigation Name",
-                "description": "This is the description of a mitigation. It contains a lot of information about the mitigation and how it can be used to protect against attacks.",
+                "mit_id": hl_id,
+                "card_id_plain": mit_id,
+                "mitigation_name": hl_name,
+                "mitigation_name_plain": mit_name,
+                "description": tdesc,
                 "attack_url": "http://localhost/test",                
                 "internal_url": url_for(
                     "question_.notactic_success", version="v15.1", subpath="M1098".replace(".", "/")
                 ),
-                "score": 0.19,
+                "score": mit_to_score[mit_id],
             }
         )
     
@@ -505,7 +622,7 @@ def full_search():
     results.extend(mitigation_use_search(search_tsqry, mitigation_sources, version))
             
     # order by match score and then Tech ID
-    results.sort(key=lambda t: (-t["score"], float(t["card_id_plain"][1:])))
+    results.sort(key=lambda t: (-t["score"])) #, float(t["card_id_plain"][1:])))
     
     # send results and what search was used for debugging purposes
     logger.info("sending search results")
