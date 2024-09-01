@@ -434,7 +434,7 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
             literal_column(search_tsqry).label("tsqry"),  # 2
         )
         .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
-        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
+        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.source, " ", "_")).in_(mitigation_sources)))
     ).subquery() 
 
     # get techniques matching search tsquery
@@ -465,7 +465,7 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
             literal_column(search_tsqry).label("tsqry"),  # 5
         )
         .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
-        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
+        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.source, " ", "_")).in_(mitigation_sources)))
         .filter(Mitigation.mit_id.in_(list(mit_to_score.keys())))
     ).subquery()
 
@@ -571,7 +571,7 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
         .join(Mitigation, Mitigation.uid == technique_mitigation_map.c.mitigation)
         .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
         .join(Technique, Technique.uid == technique_mitigation_map.c.technique)
-        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
+        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.source, " ", "_")).in_(mitigation_sources)))
         .filter(Technique.attack_version == version)
     ).subquery()    
 
@@ -608,7 +608,7 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
         .join(Mitigation, Mitigation.uid == technique_mitigation_map.c.mitigation)
         .join(Technique, Technique.uid == technique_mitigation_map.c.technique)
         .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
-        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.name, " ", "_")).in_(mitigation_sources)))
+        .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.source, " ", "_")).in_(mitigation_sources)))
         .filter(technique_mitigation_map.c.uid.in_(list(mit_to_score.keys())))
     ).subquery()
 
