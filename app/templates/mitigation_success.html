@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ success.id }} | {{ success.name }}
+{% endblock %}
+
+{% block main_id_block %}successTechNameHeader{% endblock %}
+
+{% block content %}
+
+<div x-data id="successPage" class="container-fluid">
+
+    {# Header #}
+    <header>
+
+        {# Crumbs #}
+        <nav x-cloak x-show="$store.success.crumbs.length > 0" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <template x-for="(crumb, index) in $store.success.crumbs" :key="crumb.url">
+                    <li
+                        class="breadcrumb-item"
+                        :class="(index === $store.success.crumbs.length-1) ? 'active' : ''"
+                    >
+                        {# not last #}
+                        <template x-if="index !== $store.success.crumbs.length-1">
+                            <a
+                                :href="resolveURL(crumb.url)"
+                                x-text="crumb.name"
+                            ></a>
+                        </template>
+
+                        {# last #}
+                        <template x-if="index === $store.success.crumbs.length-1">
+                            <a aria-current="page">
+                                <i class="bi bi-arrow-down" aria-hidden="true"></i>
+                                <span class="visually-hidden" x-text="crumb.name"></span>
+                            </a>
+                        </template>
+                    </li>
+                </template>
+            </ol>
+        </nav>
+
+        {# Mitigation Name [ID] + CK Link #}
+        <h1 tabindex="-1" class="fs-2" id="successMitgationNameHeader" class="mb-2">
+            <span>{{ success.name }} [</span><a
+                :href="resolveURL($store.success.url)"
+                target="_blank"
+                rel="noreferrer noopener"
+                class="link-attack-orange"
+                aria-label="`ATT&amp;CK Page {{ success.name }} {{ success.id }}`"
+            >{{ success.id }}</a><span>]</span>
+        </h1>
+
+        <div>{{ success.description | safe }}</div>
+
+    </header>
+
+    {# Techniques #}
+    <section>
+        <h2 class="fs-3">Techniques</h2>
+            <table class="table has-strong-codes has-strong-blue-links">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Version</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Use</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="(tech, m_index) in $store.success.techniques" :key="m_index">
+                        <tr :class="(m_index % 2 == 0) ? 'table-light' : ''">
+                            <td class="align-left" x-text="tech.tech_id" :tooltip="tech.tech_description"></td>
+                            <td class="align-left" x-text="tech.attack_version"></td>
+                            <td class="align-left" x-text="tech.full_tech_name"></td>
+                            <td class="align-middle text-break" x-html="tech.tech_description"></td>
+                            <td class="align-middle text-break" x-html="tech.use"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+    </section>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', async () => {
+        const crumbs = {{ breadcrumbs | default([]) | tojson }};
+        if (crumbs.length > 0) {
+            crumbs[0]['name'] = 'Home';
+        }
+
+        const success = {{ success | tojson }};
+
+        Alpine.store('success', {
+            crumbs: bracketizeCrumbIDs(crumbs),
+
+            id: success.id,
+            name: success.name,
+            description: success.description,
+            url: success.url,
+            mitigation_src: success.mitigation_src,
+
+            techniques: success.techniques
+        });
+    });
+</script>
+
+{% endblock %}

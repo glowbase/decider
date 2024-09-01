@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ success.id }} | {{ success.name }}
+{% endblock %}
+
+{% block main_id_block %}successTechNameHeader{% endblock %}
+
+{% block content %}
+
+<div x-data id="successPage" class="container-fluid">
+
+    {# Header #}
+    <header>
+
+        {# Crumbs #}
+        <nav x-cloak x-show="$store.success.crumbs.length > 0" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <template x-for="(crumb, index) in $store.success.crumbs" :key="crumb.url">
+                    <li
+                        class="breadcrumb-item"
+                        :class="(index === $store.success.crumbs.length-1) ? 'active' : ''"
+                    >
+                        {# not last #}
+                        <template x-if="index !== $store.success.crumbs.length-1">
+                            <a
+                                :href="resolveURL(crumb.url)"
+                                x-text="crumb.name"
+                            ></a>
+                        </template>
+
+                        {# last #}
+                        <template x-if="index === $store.success.crumbs.length-1">
+                            <a aria-current="page">
+                                <i class="bi bi-arrow-down" aria-hidden="true"></i>
+                                <span class="visually-hidden" x-text="crumb.name"></span>
+                            </a>
+                        </template>
+                    </li>
+                </template>
+            </ol>
+        </nav>
+
+        {# Mitigation Source Name [ID] + Link #}
+        <h1 tabindex="-1" class="fs-2" id="successMitigationSourceNameHeader" class="mb-2">
+            <span>{{ success.src_display_name }} [</span><a
+                :href="resolveURL($store.success.url)"
+                target="_blank"
+                rel="noreferrer noopener"
+                class="link-attack-orange"
+                aria-label="`Mitigation Source Page {{ success.src_display_name }} {{ success.id }}`"
+            >{{ success.id }}</a><span>]</span>
+        </h1>
+
+        <div>{{ success.description | safe }}</div>
+
+    </header>
+
+    {# Mitigaitons #}
+    <section>
+        <h2 class="fs-3">Mitigations</h2>
+            <table class="table has-strong-codes has-strong-blue-links">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="(mit, m_index) in $store.success.mitigations" :key="m_index">
+                        <tr :class="(m_index % 2 == 0) ? 'table-light' : ''">
+                            <td class="align-left" x-text="mit.mit_id" :tooltip="mit.mit_id"></td>
+                            <td class="align-left" x-text="mit.name"></td>
+                            <td class="align-middle text-break" x-html="mit.description"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+    </section>
+
+</div>
+
+<script>
+    document.addEventListener('alpine:init', async () => {
+        const crumbs = {{ breadcrumbs | default([]) | tojson }};
+        if (crumbs.length > 0) {
+            crumbs[0]['name'] = 'Home';
+        }
+
+        const success = {{ success | tojson }};
+
+        Alpine.store('success', {
+            crumbs: bracketizeCrumbIDs(crumbs),
+
+            id: success.id,
+            name: success.name,
+            description: success.description,
+            url: success.url,
+
+            mitigations: success.mitigations
+        });
+    });
+</script>
+
+{% endblock %}

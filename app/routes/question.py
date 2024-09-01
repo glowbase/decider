@@ -44,7 +44,7 @@ import re
 
 from app.routes.utils_db import VersionPicker
 from app.routes.utils import (
-    build_url,
+    build_technique_url,
     is_attack_version,
     is_base_tech_id,
     is_tact_id,
@@ -120,7 +120,7 @@ def crumb_bar(ids, version_context):
         crumbs.append(
             {
                 "name": f"{tactic.tact_name} ({tactic.tact_id})",
-                "url": build_url(None, tactic.tact_id, version_context),
+                "url": build_technique_url(None, tactic.tact_id, version_context),
             }
         )
 
@@ -150,7 +150,7 @@ def crumb_bar(ids, version_context):
             crumbs.append(
                 {
                     "name": f"{technique.tech_name} ({technique.tech_id})",
-                    "url": build_url(technique, tactic.tact_id, version_context),
+                    "url": build_technique_url(technique, tactic.tact_id, version_context),
                 }
             )
 
@@ -187,7 +187,7 @@ def get_mismappings(index, version):
         {
             "corrected": corrected.tech_id if corrected else None,
             "corrected_techname": corrected.tech_name if corrected else None,
-            "url": build_url(corrected, "TA0000", version, end=True),
+            "url": build_technique_url(corrected, "TA0000", version, end=True),
             "context": mismap.context.replace("\n", "<br>"),
             "rationale": mismap.rationale.replace("\n", "<br>"),
         }
@@ -233,7 +233,7 @@ def get_tech_and_subs(index, tactic_context, version_context):
             {
                 "id": t.tech_id.split(".")[-1],  # Trims base Technique ID off for all sub techniques
                 "name": t.tech_name,
-                "url": build_url(
+                "url": build_technique_url(
                     t,
                     tactic_context,
                     version_context,
@@ -414,7 +414,7 @@ def success_page_vars(index, tactic_context, version_context):
         {
             "tact_id": tact_id,
             "tact_name": tact_name,
-            "tech_url_for_tact": build_url(technique, tact_id, version_context, True),
+            "tech_url_for_tact": build_technique_url(technique, tact_id, version_context, True),
         }
         for tact_id, tact_name in tact_ids_names
     ]
@@ -606,7 +606,7 @@ def question_further_page(version, tactic_id, dest=""):
     if (sub is None) or re.fullmatch(r"[0-9]{3}", sub):
         success = success_page_vars(index, tactic_id, version_context)
         logger.info("serving page")
-        return render_template("success.html", **success, **crumbs)
+        return render_template("technique_success.html", **success, **crumbs)
 
     # known: sub = QnA -> Tech->SubTech question page .. if question exists
     logger.debug(f"querying Technique {technique_id} under ATT&CK {version_context}")

@@ -5,21 +5,24 @@
                "display_name": "ISM", 
                "name": "Information Security Manual",
                "description": "Australian Government Information Security Manual", 
-               "url": "https://www.cyber.gov.au/ism"
+               "url": "https://www.cyber.gov.au/ism",               
+                "id_regex": "ISM-[0-9]{3,5}"
             },
             { 
                 "source": "MITRE",
                 "display_name": "MITRE",
                 "name": "MITRE",
                 "description": "MITRE Corporation",
-                "url": "https://www.mitre.org/"
+                "url": "https://www.mitre.org/",
+                "id_regex": "M[0-9]{4}"
             },
             { 
                 "source": "NIST",
                 "display_name": "NIST 800-53",
                 "name": "NIST",
                 "description": "National Institute of Standards and Technology",
-                "url": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final"
+                "url": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",               
+                "id_regex": "[A-Z]{2}-[0-9]{1,3}"
             }
         ]
 }
