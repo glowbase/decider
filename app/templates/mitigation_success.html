@@ -92,6 +92,17 @@
     </section>
 </div>
 
+<style>
+@keyframes new-row {
+  from { background-color: #FFDEAD; }
+  to { background-color: transparent;}
+}
+
+tr.highlight td {
+  animation: new-row 2.5s 1;
+}
+</style>
+
 <script>
     document.addEventListener('alpine:init', async () => {
         const crumbs = {{ breadcrumbs | default([]) | tojson }};
@@ -116,7 +127,21 @@
 
     setTimeout(() => {
         if(window.location.href.includes('#'))
-            window.location.href = window.location.href;
+        {
+            // Extract the anchor from the URL
+            let anchor = window.location.href.split('#')[1];
+
+            // Add the highlighted class to the anchor element
+            document.getElementById(anchor).classList.add('highlight');
+
+            // Scrolls to the anchor element
+            document.getElementById(anchor).scrollIntoView();
+
+            // Clears the highlighted class after 5 seconds
+            setTimeout(() => {
+                document.getElementById(anchor).classList.remove('highlight');
+            }, 5000);
+        }
     }, 500);
 </script>
 
