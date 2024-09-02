@@ -5,11 +5,9 @@
 # start / Mitigation Source (ID) / Mitigation (ID)
 
 from operator import and_
-from flask import Blueprint, redirect, render_template, current_app, g, url_for
+from flask import Blueprint, render_template, g, url_for
 from app.models import (
-    AttackVersion,
     db,
-    Tactic,
     Technique,
     MitigationSource,
     Mitigation,
@@ -17,8 +15,7 @@ from app.models import (
 from app.models import (
     technique_mitigation_map,
 )
-from sqlalchemy import asc, func, distinct
-from sqlalchemy.orm import aliased
+from sqlalchemy import func, distinct
 from sqlalchemy.dialects.postgresql import array
 
 import app.utils.db.read as db_read
@@ -27,12 +24,11 @@ import logging.config
 
 import re
 
+from app.routes.utils_db import VersionPicker
 from app.routes.utils import (
     build_mitigation_url,
-    is_tech_id,
-    outgoing_markdown,
-    checkbox_filters_component,
-    remove_html_tag
+    is_attack_version,
+    outgoing_markdown
 )
 from app.routes.utils import ErrorDuringHTMLRoute, wrap_exceptions_as
 
@@ -45,10 +41,8 @@ def crumb_bar(ids, version_context):
 
     ids: list[str] of IDs describing the requested location in the question tree
     possible forms for ids:
-    - start                    : start     -> tactic       question page
-    - start, tactic            : tactic    -> technique    question page
-    - start, tactic, tech      : technique -> subtechnique question page (if tech has subs), else tech success page
-    - start, tactic, tech, sub : ----------------------------------------------------------,   subtech success page
+    - mitigation source             : mitigation source
+    - mitigation source, mitigation : mitigation source -> mitigation
 
     version_context: str of ATT&CK version to pull content from
 
@@ -108,17 +102,17 @@ def crumb_bar(ids, version_context):
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Question Page & Helpers - Normal Navigation & Tactic-less Success Page
+# Mitigation Page & Helpers
 
-def success_page_vars(mit_id):
+def success_page_vars(mit_id, version_context):
     """Generates variables needed for the Jinja success page template
 
-    index: str of MitId that the success page is for
+    index: str of MitID that the success page is for
 
     version_context: str of the ATT&CK version to pull content from
     """
 
-    # get technique and its mitigation uses
+    # get mitigations and its Mitigation Techniques Use
     logger.debug(f"querying Techniques and Uses of Mitigation {mit_id}")
     mitigation, mitigation_src, technique_mitigation_uses = (
         db.session.query(
@@ -132,6 +126,7 @@ def success_page_vars(mit_id):
         .outerjoin(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
         .outerjoin(technique_mitigation_map, Mitigation.uid == technique_mitigation_map.c.mitigation)
         .outerjoin(Technique, technique_mitigation_map.c.technique == Technique.uid)
+        .filter(Technique.attack_version == version_context)
         .group_by(Mitigation.uid)
     ).first()
 
@@ -169,22 +164,29 @@ def success_page_vars(mit_id):
 @mitigations_.route("/mitigations/<version>/<source>", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringHTMLRoute)
 def mitigation_src_success(version, source: str):
-    """Route of (Sub/)Technique success page without a tactic context (HTML response)
+    """Route of Mitigation Source success page (HTML response)
 
-    The utility of a success page without a Tactic context is in search results.
-    A user searching for a certain keyword / behavior can land on a (Sub/)Technique page.
-    However, the goal the adversary had was not yet considered.
-    The user can select what Tactic (goal) applies on this page to allow adding it to their cart.
+    The utility of a source success page is in linking to all the mitigations.
 
     version: str of ATT&CK version to pull content from
     """
-    g.route_title = "Mitigation Success Page"
+    g.route_title = "Mitigation Source Success Page"
     mitigation_context = db_read.mitigation.mit_src(source)
+
+    if not is_attack_version(version):
+        logger.error("failed - request contained a malformed ATT&CK version")
+        return render_template("status_codes/404.html"), 404
+
+    logger.debug(f"querying existence of version {version}")
+    version_pick = VersionPicker(version=version)
+    if not version_pick.set_vars():
+        logger.error("requested ATT&CK version does not exists")
+        return render_template("status_codes/404.html"), 404
+    logger.debug("requested ATT&CK version exists")
 
     if not mitigation_context:
         logger.error("failed - request contained a malformed Mitigation Source")
         return render_template("status_codes/404.html"), 404
-
 
     logger.debug(f"{source} exists")
 
@@ -219,22 +221,31 @@ def mitigation_src_success(version, source: str):
 @mitigations_.route("/mitigations/<version>/<source>/<path:mit_id>", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringHTMLRoute)
 def mitigation_success(version, source, mit_id):
-    """Route of (Sub/)Technique success page without a tactic context (HTML response)
+    """Route of Mitigation success page (HTML response)
 
-    The utility of a success page without a Tactic context is in search results.
-    A user searching for a certain keyword / behavior can land on a (Sub/)Technique page.
-    However, the goal the adversary had was not yet considered.
-    The user can select what Tactic (goal) applies on this page to allow adding it to their cart.
+    The utility of a Mitigation success page is in seeing all related Techniques and Uses
+    for the mitigation.
 
     version: str of ATT&CK version to pull content from
 
-    subpath: str path describing resource being accessed
-    subpath formats and their meaning:
-    - T[0-9]{4}/         : Technique no-tactic success page
-    - T[0-9]{4}/[0-9]{3} : SubTechnique no-tactic success page
+    source: str of Mitigation Source that the Mitigation belongs to
+    path: str path describing resource being accessed. This validated against the Regex of the Mitigation Source
     """
     g.route_title = "Mitigation Success Page"
     mitigation_src_context = db_read.mitigation.mit_src(source)
+
+    if not is_attack_version(version):
+        logger.error("failed - request contained a malformed ATT&CK version")
+        return render_template("status_codes/404.html"), 404
+
+    logger.debug(f"querying existence of version {version}")
+    version_pick = VersionPicker(version=version)
+    if not version_pick.set_vars():
+        logger.error("requested ATT&CK version does not exists")
+        return render_template("status_codes/404.html"), 404
+    logger.debug("requested ATT&CK version exists")
+
+    version_context = version_pick.cur_version
 
     if not mitigation_src_context:
         logger.error("failed - request contained a malformed Mitigation Source")
@@ -244,7 +255,7 @@ def mitigation_success(version, source, mit_id):
         logger.error("failed - request had a malformed Mitigation ID")
         return render_template("status_codes/404.html"), 404
 
-    success = success_page_vars(mit_id)
+    success = success_page_vars(mit_id, version_context)
 
     crumbs = crumb_bar([mitigation_src_context.source, mit_id], version)
     logger.info("serving page")
