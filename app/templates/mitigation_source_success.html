@@ -53,7 +53,6 @@
         </h1>
 
         <div>{{ success.description | safe }}</div>
-
     </header>
 
     {# Mitigaitons #}
@@ -70,7 +69,16 @@
                 <tbody>
                     <template x-for="(mit, m_index) in $store.success.mitigations" :key="m_index">
                         <tr :class="(m_index % 2 == 0) ? 'table-light' : ''">
-                            <td class="align-left" x-text="mit.mit_id" :tooltip="mit.mit_id"></td>
+                            <td class="align-left" :tooltip="mit.mit_id">
+                                <span>
+                                    <a
+                                        :href="resolveURL(mit.internal_url)"
+                                        rel="noreferrer noopener"
+                                        class="link-attack-orange"
+                                        aria-label="`Mitigation Page ${mit.mit_id}`"
+                                    ><span x-text="mit.mit_id"></span></a>
+                                </span>
+                            </td>
                             <td class="align-left" x-text="mit.name"></td>
                             <td class="align-middle text-break" x-html="mit.description"></td>
                         </tr>
