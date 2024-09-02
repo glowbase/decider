@@ -299,11 +299,12 @@
                                     <div class="card-text" x-html="card.description"></div>
                                 </a>
 
-                                <a
-                                        class="link-strong-blue card-link stretched-link"
-                                        :href="resolveURL(card.internal_url)"
-                                        :aria-label="`Select Card ${card.tech_name_plain} ${card.card_id_plain}`"
-                                ></a>
+                                    <a
+                                            class="link-strong-blue card-link stretched-link"
+                                            :href="resolveURL(card.internal_url)"
+                                            :aria-label="`Select Card ${card.tech_name_plain} ${card.card_id_plain}`"
+                                    ></a>
+                                </div>
                             </div>
                         </template>
                         <template x-if="card.mitigation">
@@ -317,11 +318,12 @@
                                     <div class="card-text" x-html="card.description"></div>
                                 </a>
 
-                                <a
-                                        class="link-strong-blue card-link stretched-link"
-                                        :href="resolveURL(card.internal_url)"
-                                        :aria-label="`Select Card ${card.mitigation_name_plain} ${card.card_id_plain}`"
-                                ></a>
+                                    <a
+                                            class="link-strong-blue card-link stretched-link"
+                                            :href="resolveURL(card.internal_url)"
+                                            :aria-label="`Select Card ${card.mitigation_name_plain} ${card.card_id_plain}`"
+                                    ></a>
+                                </div>
                             </div>
                         </template>
                         <template x-if="card.mitigation_use">
@@ -334,12 +336,13 @@
                                 <div class="card-body">
                                     <div class="card-text" x-html="card.use"></div>
                                 </a>
-    
-                                <a
-                                        class="link-strong-blue card-link stretched-link"
-                                        :href="resolveURL(card.internal_url)"
-                                        :aria-label="`Select Card ${card.use_name_plain} ${card.card_id_plain}`"
-                                ></a>
+        
+                                    <a
+                                            class="link-strong-blue card-link stretched-link"
+                                            :href="resolveURL(card.internal_url)"
+                                            :aria-label="`Select Card ${card.use_name_plain} ${card.card_id_plain}`"
+                                    ></a>
+                                </div>
                             </div>
                         </template>
                     </div>

@@ -92,10 +92,6 @@
 <script>
     document.addEventListener('alpine:init', async () => {
         const crumbs = {{ breadcrumbs | default([]) | tojson }};
-        if (crumbs.length > 0) {
-            crumbs[0]['name'] = 'Home';
-        }
-
         const success = {{ success | tojson }};
 
         Alpine.store('success', {

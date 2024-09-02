@@ -75,26 +75,18 @@ def build_mitigation_url(mitigation, mitigation_src_context, version_context, en
     # Tactic page
     if mitigation is None:
         return url_for(
-            "mitigation_.question_tactic_page",
+            "mitigations_.mitigation_src_success",
             version=version_context,
-            tactic_id=mitigation_src_context
+            source=mitigation_src_context.source.lower()
         )
-    tech_id = mitigation.tech_id
+    mit_id = mitigation.mit_id
 
-    # Tactic-less Tech/Sub, always a success page (no question page exists without being in-tree)
-    if mitigation_src_context == "MS0000":
-        return url_for(
-            "mitigation_.notactic_success",
-            version=version_context,
-            subpath=tech_id.replace('.', '/')
-        )
-
-    # Tech to Subtech question page
+    # Mitigation page
     return url_for(
-        "question_.question_further_page",
+        "mitigations_.mitigation_success",
         version=version_context,
-        tactic_id=mitigation_src_context,
-        dest=f"{tech_id}/QnA"
+        source=mitigation_src_context.source.lower(),
+        mit_id=f"{mit_id}"
     )
 
 

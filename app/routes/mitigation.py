@@ -63,55 +63,43 @@ def crumb_bar(ids, version_context):
         return None
 
     # start always present
-    crumbs = [{
-        "name": "start",
-        "url": url_for("question_.question_start_page", version=version_context),
-    }]
+    crumbs = []
 
-    # tactic if present
-    if len(ids) > 1:
-        logger.debug(f"Crumb Bar: querying Tactic by ID {ids[1]} ({version_context})")
-        tactic = db.session.query(Tactic).filter_by(tact_id=ids[1], attack_version=version_context).first()
+    logger.debug(f"Crumb Bar: querying Source by ID {ids[0]} ({version_context})")
+    mitigation_src = db_read.mitigation.mit_src(ids[0])
 
-        if tactic is None:
-            logger.error("Crumb Bar: Tactic does not exist")
-            return None
-        logger.debug("Crumb Bar: Tactic exists")
+    if mitigation_src is None:
+        logger.error("Crumb Bar: Mitigation Source does not exist")
+        return None
+    logger.debug("Crumb Bar: Tactic exists")
 
-        crumbs.append(
-            {
-                "name": f"{tactic.tact_name} ({tactic.tact_id})",
-                "url": build_mitigation_url(None, tactic.tact_id, version_context),
-            }
-        )
+    crumbs.append(
+        {
+            "name": f"{mitigation_src.display_name}",
+            "url": build_mitigation_url(None, mitigation_src, version_context),
+        }
+    )
 
     # techs if present
-    if len(ids) > 2:
-        if not all(is_tech_id(t) for t in ids[2:]):
-            logger.error("Crumb Bar: failed - request had one or more malformed Techniques")
-            return None
-
-        logger.debug(f"Crumb Bar: querying Techs by IDs {ids[2:]} ({version_context})")
-        techniques = (
-            db.session.query(Technique).filter(
-                and_(
-                    Technique.tech_id.in_(ids[2:]),
-                    Technique.attack_version == version_context,
-                )
+    if len(ids) > 1:
+        logger.debug(f"Crumb Bar: querying Mitigations by IDs {ids[1:]} ({version_context})")
+        mitigations = (
+            db.session.query(Mitigation).filter(
+                Mitigation.mit_id.in_(ids[1:])
             )
         ).all()
 
-        if len(techniques) != len(ids[2:]):
-            logger.error("Crumb Bar: 1+ Techniques do not exist")
+        if len(mitigations) != len(ids[1:]):
+            logger.error("Crumb Bar: 1+ Mitigation do not exist")
             return None
         logger.debug("Crumb Bar: All Techniques exist")
 
-        techniques.sort(key=lambda t: ids[2:].index(t.tech_id))
-        for technique in techniques:
+        mitigations.sort(key=lambda t: ids[1:].index(t.mit_id))
+        for mit in mitigations:
             crumbs.append(
                 {
-                    "name": f"{technique.tech_name} ({technique.tech_id})",
-                    "url": build_mitigation_url(technique, tactic.tact_id, version_context),
+                    "name": f"{mit.name} ({mit.mit_id})",
+                    "url": build_mitigation_url(mit, mitigation_src, version_context),
                 }
             )
 
@@ -150,20 +138,21 @@ def success_page_vars(mit_id):
     logger.debug(f"got {len(technique_mitigation_uses)} Uses for Mitigation {mitigation.mit_id}")
 
     mitigations_uses = []
-    for tech in technique_mitigation_uses:
-        mitigations_uses.append(
-            {
-                "tech_id": tech[0],
-                "full_tech_name": tech[1],
-                "attack_version": tech[2],
-                "tech_description": outgoing_markdown(tech[3]) if tech[3] is not None else "",
-                "tech_url": tech[4],
-                "internal_url": url_for(
-                    "question_.notactic_success", version=tech[2], subpath=tech[0].replace(".", "/")
-                ),
-                "use": outgoing_markdown(tech[5]) if tech[5] is not None else "",
-            }
-        )
+    if(not technique_mitigation_uses is None or len(technique_mitigation_uses) > 0):
+        for tech in technique_mitigation_uses:
+            if(tech[0] is not None and len(tech[0]) > 0):
+                mitigations_uses.append(
+                {
+                    "tech_id": tech[0],
+                    "full_tech_name": tech[1],
+                    "attack_version": tech[2],
+                    "tech_description": outgoing_markdown(tech[3]) if tech[3] is not None else "",
+                    "tech_url": tech[4],
+                    "internal_url": url_for(
+                        "question_.notactic_success", version=tech[2], subpath=tech[0].replace(".", "/")
+                    ),
+                    "use": outgoing_markdown(tech[5]) if tech[5] is not None else "",
+                })
 
     # create jinja vars
     return {
@@ -190,9 +179,9 @@ def mitigation_src_success(version, source: str):
     version: str of ATT&CK version to pull content from
     """
     g.route_title = "Mitigation Success Page"
-    mitigation_source = db_read.mitigation.mit_src(source)
+    mitigation_context = db_read.mitigation.mit_src(source)
 
-    if not mitigation_source:
+    if not mitigation_context:
         logger.error("failed - request contained a malformed Mitigation Source")
         return render_template("status_codes/404.html"), 404
 
@@ -200,7 +189,7 @@ def mitigation_src_success(version, source: str):
     logger.debug(f"{source} exists")
 
     mitigations = []
-    mits = db.session.query(Mitigation).filter(Mitigation.mitigation_source == mitigation_source.uid).all()
+    mits = db.session.query(Mitigation).filter(Mitigation.mitigation_source == mitigation_context.uid).all()
     for mit in mits:
         mitigations.append(
             {
@@ -214,21 +203,22 @@ def mitigation_src_success(version, source: str):
 
     success = {
         "success": {
-            "id": mitigation_source.uid,
-            "src_display_name": mitigation_source.display_name,
-            "description": outgoing_markdown(mitigation_source.description),
-            "url": mitigation_source.url,
+            "id": mitigation_context.uid,
+            "src_display_name": mitigation_context.display_name,
+            "description": outgoing_markdown(mitigation_context.description),
+            "url": mitigation_context.url,
             "mitigations": mitigations,
         }
     }
 
+    crumbs = crumb_bar([mitigation_context.source], version)
     logger.info("serving page")
-    return render_template("mitigation_source_success.html", **success)
+    return render_template("mitigation_source_success.html", **success, **crumbs)
 
 
 @mitigations_.route("/mitigations/<version>/<source>/<path:mit_id>", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringHTMLRoute)
-def mitigation_success(version, source, mit_id=""):
+def mitigation_success(version, source, mit_id):
     """Route of (Sub/)Technique success page without a tactic context (HTML response)
 
     The utility of a success page without a Tactic context is in search results.
@@ -244,18 +234,18 @@ def mitigation_success(version, source, mit_id=""):
     - T[0-9]{4}/[0-9]{3} : SubTechnique no-tactic success page
     """
     g.route_title = "Mitigation Success Page"
-    mitigation_context = db_read.mitigation.mit_src(source)
-    path = mit_id.strip().strip("/").split("/")
+    mitigation_src_context = db_read.mitigation.mit_src(source)
 
-    if not mitigation_context:
+    if not mitigation_src_context:
         logger.error("failed - request contained a malformed Mitigation Source")
         return render_template("status_codes/404.html"), 404
 
-    if not re.fullmatch(mitigation_context.id_regex, mit_id):
+    if not re.fullmatch(mitigation_src_context.id_regex, mit_id):
         logger.error("failed - request had a malformed Mitigation ID")
         return render_template("status_codes/404.html"), 404
 
     success = success_page_vars(mit_id)
 
+    crumbs = crumb_bar([mitigation_src_context.source, mit_id], version)
     logger.info("serving page")
-    return render_template("mitigation_success.html", **success)
+    return render_template("mitigation_success.html", **success, **crumbs)

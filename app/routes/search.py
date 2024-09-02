@@ -588,7 +588,6 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
         ).filter(generate_existing.c.exists)
     )
     
-    print(str(filter_and_scoreq.statement))
     filter_and_score = filter_and_scoreq.all()
 
     print(f"got {len(filter_and_score)} matching Usees for Technique Mitigations")
