@@ -221,6 +221,7 @@ class MitigationSource(db.Model):
     description = db.Column(db.Text)
     display_name = db.Column(db.Text)
     url= db.Column(db.Text)
+    id_regex = db.Column(db.Text)
     attack_version = db.Column(db.Text, db.ForeignKey("attack_version.version"), nullable=False)
 
 technique_mitigation_map = db.Table(

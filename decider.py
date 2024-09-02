@@ -27,6 +27,7 @@ from app.routes.utils_db import VersionPicker
 from app.routes.edit import edit_
 from app.routes.docs import docs_
 from app.routes.admin import admin_
+from app.routes.mitigation import mitigations_
 from app.routes.api import api_
 from app.routes.misc import misc_
 
@@ -144,6 +145,7 @@ def register_blueprints(app):
     """Register application blueprints"""
     app.register_blueprint(auth_)
     app.register_blueprint(profile_)
+    app.register_blueprint(mitigations_)
     app.register_blueprint(question_)
     app.register_blueprint(search_)
     app.register_blueprint(edit_)

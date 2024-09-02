@@ -39,6 +39,7 @@ def mitigation_sources_table(version, src_mgr):
                     "description"   : mtg["description"],
                     "display_name"  : mtg["display_name"],
                     "url"           : mtg["url"],
+                    "id_regex"      : mtg["id_regex"],
                     "attack_version": version,
                     # fmt: on
                 }

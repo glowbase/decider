@@ -4,7 +4,7 @@ from app.models import technique_platform_map, tactic_technique_map, tactic_ds_m
 from app.routes.auth import disabled_in_kiosk
 
 from app.routes.utils import (
-    build_url,
+    build_technique_url,
     is_attack_version,
     is_base_tech_id,
     is_tact_id,
@@ -208,7 +208,7 @@ def get_techniques():
             "technique_id": tech.tech_id,
             "technique_name": tech.tech_name,
             "attack_url": tech.tech_url,
-            "decider_url": build_url(tech, "TA0000", version),  # /no_tactic/ URLs, implicit end=True
+            "decider_url": build_technique_url(tech, "TA0000", version),  # /no_tactic/ URLs, implicit end=True
             "description": tech.tech_description,
             "platforms": platforms,
             "uid": tech.uid,
@@ -417,7 +417,7 @@ def answers_api_start(args):
             "content": outgoing_markdown(tactic.tact_answer or ""),
             "name": tactic.tact_name,
             "url": tactic.tact_url,
-            "path": build_url(None, tactic.tact_id, version_context),
+            "path": build_technique_url(None, tactic.tact_id, version_context),
             "platforms": platforms,
             "num": num,
             "data_sources": [ds for ds in data_sources if ds],
@@ -480,7 +480,7 @@ def answers_api_tactic(args):
             "content": outgoing_markdown(technique.tech_answer or ""),
             "name": technique.tech_name,
             "url": technique.tech_url,
-            "path": build_url(technique, index, version_context, num == 0),  # *
+            "path": build_technique_url(technique, index, version_context, num == 0),  # *
             "platforms": platforms,
             "num": num,
             "data_sources": [ds for ds in data_sources if ds],
@@ -561,13 +561,13 @@ def answers_api_technique(args):
     for technique, sub, platforms, data_sources in items:
         # sub is the BaseTech (general case)
         if sub.uid == technique.uid:
-            path = build_url(technique, tactic_context, version_context, True)  # end=True, success page view
+            path = build_technique_url(technique, tactic_context, version_context, True)  # end=True, success page view
             content = outgoing_markdown(current_app.config["BASE_TECHNIQUE_ANSWER"])
 
         # sub is SubTechnique of BaseTech
         else:
             technique = sub
-            path = build_url(technique, tactic_context, version_context)
+            path = build_technique_url(technique, tactic_context, version_context)
             content = outgoing_markdown(technique.tech_answer or "")
 
         answers.append(

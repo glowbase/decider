@@ -61,8 +61,44 @@ EMAIL_REGEX_P = re.compile(
     r"""((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))"""
 )
 
+def build_mitigation_url(mitigation, mitigation_src_context, version_context, end=False):
+    """Forms URL pointing to a Technique success/question page
+    - The Tactic and Version in which the Technique lives are to be specified
+    - end denotes whether the success page (end=True) or the question page (end=False) is shown for Techs with subs
+      - end can also be truthy / falsey
 
-def build_url(technique, tactic_context, version_context, end=False):
+    mitigation       : Twxyz, Twxyz.abc
+    mitigation_src_context  : TAwxyz, TA0000 (no_tactic page, accessed via search)
+    version_context : whatever valid version strings exist in the DB
+    """
+
+    # Tactic page
+    if mitigation is None:
+        return url_for(
+            "mitigation_.question_tactic_page",
+            version=version_context,
+            tactic_id=mitigation_src_context
+        )
+    tech_id = mitigation.tech_id
+
+    # Tactic-less Tech/Sub, always a success page (no question page exists without being in-tree)
+    if mitigation_src_context == "MS0000":
+        return url_for(
+            "mitigation_.notactic_success",
+            version=version_context,
+            subpath=tech_id.replace('.', '/')
+        )
+
+    # Tech to Subtech question page
+    return url_for(
+        "question_.question_further_page",
+        version=version_context,
+        tactic_id=mitigation_src_context,
+        dest=f"{tech_id}/QnA"
+    )
+
+
+def build_technique_url(technique, tactic_context, version_context, end=False):
     """Forms URL pointing to a Technique success/question page
     - The Tactic and Version in which the Technique lives are to be specified
     - end denotes whether the success page (end=True) or the question page (end=False) is shown for Techs with subs
