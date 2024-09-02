@@ -125,8 +125,10 @@ def success_page_vars(mit_id, version_context):
         )
         .outerjoin(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
         .outerjoin(technique_mitigation_map, Mitigation.uid == technique_mitigation_map.c.mitigation)
-        .outerjoin(Technique, technique_mitigation_map.c.technique == Technique.uid)
-        .filter(Technique.attack_version == version_context)
+        .outerjoin(Technique, and_(
+            technique_mitigation_map.c.technique == Technique.uid, 
+            Technique.attack_version == version_context)
+        )
         .group_by(Mitigation.uid)
     ).first()
 
