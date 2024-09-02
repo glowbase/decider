@@ -62,7 +62,6 @@
             <table class="table has-strong-codes has-strong-blue-links">
                 <thead>
                     <tr>
-                        <th>Version</th>
                         <th>Name</th>
                         <th>Description</th>
                         <th>Use</th>
@@ -71,7 +70,7 @@
                 <template x-if="$store.success.techniques.length == 0">
                     <tbody>
                         <tr class="table-light">
-                            <td colspan="4" class="text-center">No techniques found.</td>
+                            <td colspan="3" class="text-center">No techniques found.</td>
                         </tr>
                     </tbody>
                 </template>
@@ -79,7 +78,6 @@
                     <tbody>
                         <template x-for="(tech, m_index) in $store.success.techniques" :key="m_index">
                             <tr :class="(m_index % 2 == 0) ? 'table-light' : ''" :id="tech.tech_id">
-                                <td class="align-left" x-text="tech.attack_version"></td>
                                 <td class="align-left">
                                     <span x-text="tech.full_tech_name"></span> <span>[
                                     <a

@@ -43,13 +43,13 @@
 
         {# Mitigation Source Name [ID] + Link #}
         <h1 tabindex="-1" class="fs-2" id="successMitigationSourceNameHeader" class="mb-2">
-            <span>{{ success.src_display_name }} [</span><a
+            <a
                 :href="resolveURL($store.success.url)"
                 target="_blank"
                 rel="noreferrer noopener"
                 class="link-attack-orange"
                 aria-label="`Mitigation Source Page {{ success.src_display_name }} {{ success.id }}`"
-            >{{ success.id }}</a><span>]</span>
+            >{{ success.src_display_name }}</a>
         </h1>
 
         <div>{{ success.description | safe }}</div>
