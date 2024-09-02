@@ -31,7 +31,5 @@ UNKNOWN.egg-info/
 
 # Local working notes / tools
 /scratch/
-config/build_sources/mappings/mappings.xlsx
-*.xlsx
 
 config/**

@@ -430,8 +430,7 @@ def success_page_vars(index, tactic_context, version_context):
                 "name": name,
                 "source_display_name": source_display_name,
                 "source_url": source_url,
-                "description": description,
-                "use": use,
+                "description": use if not use is None and len(use) > 0 else description, #pizazz
             }
         )
 

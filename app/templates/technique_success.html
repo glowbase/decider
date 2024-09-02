@@ -161,7 +161,7 @@
                         <tr>
                             <th>Code</th>
                             <th>Name</th>
-                            <th>Description</th>
+                            <th>Use/Description</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -169,7 +169,7 @@
                             <tr :class="(m_index % 2 == 0) ? 'table-light' : ''">
                                 <td class="align-left" x-text="mit_set[m_index].mit_id" :tooltip="mit_set[m_index].description"></td>
                                 <td class="align-left" x-text="mit_set[m_index].name"></td>
-                                <td class="align-middle text-break" x-html="mit_set[m_index].use"></td>
+                                <td class="align-middle text-break" x-html="mit_set[m_index].description"></td>
                             </tr>
                         </template>
                     </tbody>
