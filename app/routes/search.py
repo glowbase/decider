@@ -461,8 +461,9 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
             Mitigation.name,  # 1
             Mitigation.description,  # 2
             Mitigation.description,  # 3
-            MitigationSource.display_name,  # 4
-            literal_column(search_tsqry).label("tsqry"),  # 5
+            MitigationSource.source,  # 4
+            MitigationSource.display_name,  # 5
+            literal_column(search_tsqry).label("tsqry"),  # 6
         )
         .join(MitigationSource, MitigationSource.uid == Mitigation.mitigation_source)
         .filter(or_(not mitigation_sources, func.lower(func.replace(MitigationSource.source, " ", "_")).in_(mitigation_sources)))
@@ -501,7 +502,7 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
     result_q = (
         db.session.query(
             result_subq,
-            # 5, 6, 7
+            # 6, 7, 8
             literal_column(PSQLTxt.basic_headline(PSQLTxt.zwspace_pad_special("mit_id"), "tsqry")).label("hl_id"),
             literal_column(PSQLTxt.basic_headline(PSQLTxt.unaccent("name"), "tsqry")).label("hl_name"),
             literal_column(tech_desc_headline).label("hl_desc")
@@ -515,6 +516,7 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
         mit_name,
         mit_desc,
         mit_url, #desc replica
+        mit_src,
         mit_src_display_name,
         _,  # tsqry
         hl_id,
@@ -540,9 +542,9 @@ def mitigation_search(search_tsqry, mitigation_sources, version):
                 "mitigation_name": hl_name,
                 "mitigation_name_plain": mit_name,
                 "description": tdesc,
-                "attack_url": "http://localhost/test",                
+                "attack_url": "http://localhost/test",
                 "internal_url": url_for(
-                    "question_.notactic_success", version="v15.1", subpath="M1098".replace(".", "/")
+                    "mitigations_.mitigation_success", version=version, source=mit_src.lower(), mit_id=mit_id
                 ),
                 "score": mit_to_score[mit_id],
             }
@@ -602,8 +604,9 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
             Technique.tech_name,  # 3
             Mitigation.mit_id,  # 4
             Mitigation.name,  # 5
-            MitigationSource.display_name,  # 6
-            literal_column(search_tsqry).label("tsqry"),  # 7
+            MitigationSource.source,  # 7
+            MitigationSource.display_name,  # 8
+            literal_column(search_tsqry).label("tsqry"),  # 9
         )
         .join(Mitigation, Mitigation.uid == technique_mitigation_map.c.mitigation)
         .join(Technique, Technique.uid == technique_mitigation_map.c.technique)
@@ -642,7 +645,7 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
     result_q = (
         db.session.query(
             result_subq,
-            # 6, 7, 8, 9, 10
+            # 10, 11, 12, 13, 14
             literal_column(PSQLTxt.basic_headline(PSQLTxt.zwspace_pad_special("mit_id"), "tsqry")).label("hl_mit_id"),
             literal_column(PSQLTxt.basic_headline(PSQLTxt.unaccent("name"), "tsqry")).label("hl_mit_name"),
             literal_column(PSQLTxt.basic_headline(PSQLTxt.zwspace_pad_special("tech_id"), "tsqry")).label("hl_tech_id"),
@@ -661,6 +664,7 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
         tech_name,
         mit_id,
         mit_name,
+        mit_src,
         mit_src_display_name,
         _,  # tsqry
         hl_mit_id,
@@ -692,7 +696,7 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
                 "use": hl_use,
                 "attack_url": "http://localhost/test",                
                 "internal_url": url_for(
-                    "question_.notactic_success", version="v15.1", subpath="M1098".replace(".", "/")
+                    "mitigations_.mitigation_success", version=version, source=mit_src.lower(), mit_id=mit_id, _anchor=tech_id
                 ),
                 "score": mit_to_score[mit_tech_uid],
             }

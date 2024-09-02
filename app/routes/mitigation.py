@@ -158,6 +158,9 @@ def success_page_vars(mit_id):
                 "attack_version": tech[2],
                 "tech_description": outgoing_markdown(tech[3]) if tech[3] is not None else "",
                 "tech_url": tech[4],
+                "internal_url": url_for(
+                    "question_.notactic_success", version=tech[2], subpath=tech[0].replace(".", "/")
+                ),
                 "use": outgoing_markdown(tech[5]) if tech[5] is not None else "",
             }
         )
@@ -174,9 +177,9 @@ def success_page_vars(mit_id):
         }
     }
 
-@mitigations_.route("/mitigations/<source>", methods=["GET"])
+@mitigations_.route("/mitigations/<version>/<source>", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringHTMLRoute)
-def mitigation_src_success(source: str):
+def mitigation_src_success(version, source: str):
     """Route of (Sub/)Technique success page without a tactic context (HTML response)
 
     The utility of a success page without a Tactic context is in search results.
@@ -204,7 +207,8 @@ def mitigation_src_success(source: str):
                 "uid":mit.uid,
                 "mit_id": mit.mit_id,
                 "name": mit.name,
-                "description": outgoing_markdown(mit.description)
+                "description": outgoing_markdown(mit.description),
+                "internal_url": url_for("mitigations_.mitigation_success", version=version, source=source, mit_id=mit.mit_id),
             }
         )
 
@@ -222,9 +226,9 @@ def mitigation_src_success(source: str):
     return render_template("mitigation_source_success.html", **success)
 
 
-@mitigations_.route("/mitigations/<source>/<path:mit_id>", methods=["GET"])
+@mitigations_.route("/mitigations/<version>/<source>/<path:mit_id>", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringHTMLRoute)
-def mitigation_success(source, mit_id=""):
+def mitigation_success(version, source, mit_id=""):
     """Route of (Sub/)Technique success page without a tactic context (HTML response)
 
     The utility of a success page without a Tactic context is in search results.

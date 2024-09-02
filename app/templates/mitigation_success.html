@@ -62,7 +62,6 @@
             <table class="table has-strong-codes has-strong-blue-links">
                 <thead>
                     <tr>
-                        <th>Code</th>
                         <th>Version</th>
                         <th>Name</th>
                         <th>Description</th>
@@ -71,10 +70,19 @@
                 </thead>
                 <tbody>
                     <template x-for="(tech, m_index) in $store.success.techniques" :key="m_index">
-                        <tr :class="(m_index % 2 == 0) ? 'table-light' : ''">
-                            <td class="align-left" x-text="tech.tech_id" :tooltip="tech.tech_description"></td>
+                        <tr :class="(m_index % 2 == 0) ? 'table-light' : ''" :id="tech.tech_id">
                             <td class="align-left" x-text="tech.attack_version"></td>
-                            <td class="align-left" x-text="tech.full_tech_name"></td>
+                            <td class="align-left">
+                                <span x-text="tech.full_tech_name"></span> <span>[
+                                <a
+                                    :href="resolveURL(tech.internal_url)"
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    class="link-attack-orange">
+                                    <span                                
+                                        x-text="tech.tech_id">
+                                    </span>
+                            </a>]</span></td>
                             <td class="align-middle text-break" x-html="tech.tech_description"></td>
                             <td class="align-middle text-break" x-html="tech.use"></td>
                         </tr>
@@ -105,6 +113,11 @@
             techniques: success.techniques
         });
     });
+
+    setTimeout(() => {
+        if(window.location.href.includes('#'))
+            window.location.href = window.location.href;
+    }, 500);
 </script>
 
 {% endblock %}
