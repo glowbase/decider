@@ -68,25 +68,35 @@
                         <th>Use</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <template x-for="(tech, m_index) in $store.success.techniques" :key="m_index">
-                        <tr :class="(m_index % 2 == 0) ? 'table-light' : ''" :id="tech.tech_id">
-                            <td class="align-left" x-text="tech.attack_version"></td>
-                            <td class="align-left">
-                                <span x-text="tech.full_tech_name"></span> <span>[
-                                <a
-                                    :href="resolveURL(tech.internal_url)"
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    class="link-attack-orange">
-                                    <span                                
-                                        x-text="tech.tech_id">
-                                    </span>
-                            </a>]</span></td>
-                            <td class="align-middle text-break" x-html="tech.tech_description"></td>
-                            <td class="align-middle text-break" x-html="tech.use"></td>
+                <template x-if="$store.success.techniques.length == 0">
+                    <tbody>
+                        <tr class="table-light">
+                            <td colspan="4" class="text-center">No techniques found.</td>
                         </tr>
-                    </template>
+                    </tbody>
+                </template>
+                <template x-if="$store.success.techniques.length > 0">
+                    <tbody>
+                        <template x-for="(tech, m_index) in $store.success.techniques" :key="m_index">
+                            <tr :class="(m_index % 2 == 0) ? 'table-light' : ''" :id="tech.tech_id">
+                                <td class="align-left" x-text="tech.attack_version"></td>
+                                <td class="align-left">
+                                    <span x-text="tech.full_tech_name"></span> <span>[
+                                    <a
+                                        :href="resolveURL(tech.internal_url)"
+                                        target="_blank"
+                                        rel="noreferrer noopener"
+                                        class="link-attack-orange">
+                                        <span                                
+                                            x-text="tech.tech_id">
+                                        </span>
+                                </a>]</span></td>
+                                <td class="align-middle text-break" x-html="tech.tech_description"></td>
+                                <td class="align-middle text-break" x-html="tech.use"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </template>
                 </tbody>
             </table>
     </section>
@@ -106,10 +116,6 @@ tr.highlight td {
 <script>
     document.addEventListener('alpine:init', async () => {
         const crumbs = {{ breadcrumbs | default([]) | tojson }};
-        if (crumbs.length > 0) {
-            crumbs[0]['name'] = 'Home';
-        }
-
         const success = {{ success | tojson }};
 
         Alpine.store('success', {
