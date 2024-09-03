@@ -157,6 +157,9 @@ def outgoing_markdown(database_md):
     - Prevents XSS vulns as well
     """
 
+    if database_md is None or len(database_md) == 0:
+        return ""
+    
     # Gives us some control on spacing
     spaced_out = "\n".join(("<br>" if ln == "\\ " else ln) for ln in database_md.split("\n"))
 
