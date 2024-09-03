@@ -127,6 +127,7 @@ def search_page():
     version = request.args.get("version")
     search_str = request.args.get("search")
     tactics = request.args.getlist("tactics")
+    options = request.args.getlist("options")
     mitigation_sources = request.args.getlist("mitigation_sources")
     platforms = request.args.getlist("platforms")
     data_sources = request.args.getlist("data_sources")
@@ -160,17 +161,18 @@ def search_page():
     logger.debug(f"querying Data Sources in ATT&CK {ver_name} for filters")
     data_source_names = [d.readable_name for d in ver_model.data_sources]
 
-    #############################################
-    #############################################
-    ## Needs to come from the database
-    ## Will require an update to the db import to
-    ## include the Mitigation_Source table
-    
-    #logger.debug(f"querying Mitigation Sources in ATT&CK {ver_name} for filters")
-    mitigation_source_names = ["MITRE", "ISM", "NIST"]
-    #############################################
-    #############################################
-    
+    logger.debug(f"querying Mitigation Sources in ATT&CK {ver_name} for filters")
+    mitigation_source_names = db.session.query(MitigationSource.source).all()
+
+    options_names = ["Techniques","Mitigations","Mitigation Uses"]
+
+    options_filters = checkbox_filters_component(
+        "options_fs",
+        options_names,
+        "searchClearOptions()",
+        "searchUpdateOptions(this)",
+        different_name="Options",
+    )
 
     tactic_filters = checkbox_filters_component(
         "tactic_fs",
@@ -195,14 +197,14 @@ def search_page():
     )
     mitigation_source_filters = checkbox_filters_component(
         "mitigation_source_fs",
-        mitigation_source_names,
+        [x[0] for x in mitigation_source_names],
         "searchClearMitigationSources()",
         "searchUpdateMitigationSources(this)",
         different_name="Mitigation Source",
     )
 
     response = make_response(
-        render_template("search.html", **tactic_filters, **platform_filters, **data_source_filters, **mitigation_source_filters)
+        render_template("search.html", **options_filters, **tactic_filters, **platform_filters, **data_source_filters, **mitigation_source_filters)
     )
 
     logger.info("serving page")
@@ -590,7 +592,7 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
     
     filter_and_score = filter_and_scoreq.all()
 
-    print(f"got {len(filter_and_score)} matching Usees for Technique Mitigations")
+    print(f"got {len(filter_and_score)} matching Uses for Technique Mitigations")
     mit_to_score = {mit: score for mit, score in filter_and_score}
 
     # fetch details of matching mitigations
@@ -714,6 +716,7 @@ def full_search():
     version = request.args.get("version")
     search_str = request.args.get("search")
     tactics = request.args.getlist("tactics")
+    options = request.args.getlist("options")
     mitigation_sources = request.args.getlist("mitigation_sources")
     platforms = request.args.getlist("platforms")
     data_sources = request.args.getlist("data_sources")
@@ -747,10 +750,15 @@ def full_search():
 
     search_tsqry = tsqry_rep(parsed_search.bool_expr, parsed_search.sym_to_term)
 
-    results.extend(technique_search(search_tsqry, tactics, version, platforms, data_sources))
+    print (options)
+    if (options is None or len(options) == 0) or "techniques" in options:
+        results.extend(technique_search(search_tsqry, tactics, version, platforms, data_sources))
 
-    results.extend(mitigation_search(search_tsqry, mitigation_sources, version))
-    results.extend(mitigation_use_search(search_tsqry, mitigation_sources, version))
+    if (options is None or len(options) == 0) or "mitigations" in options:
+        results.extend(mitigation_search(search_tsqry, mitigation_sources, version))
+    
+    if (options is None or len(options) == 0) or "mitigation_uses" in options:
+        results.extend(mitigation_use_search(search_tsqry, mitigation_sources, version))
             
     # order by match score and then Tech ID
     results.sort(key=lambda t: (-t["score"])) #, float(t["card_id_plain"][1:])))
