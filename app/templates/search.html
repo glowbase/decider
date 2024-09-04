@@ -13,7 +13,7 @@
         <div class="col-12 col-md-9 offset-md-3 col-xl-10 offset-xl-2">
 
             {# Page Title #}
-            <h1 class="fs-3 mb-3">Full Technique Search</h1>
+            <h1 class="fs-3 mb-3">Full Text Search</h1>
 
         </div>
     </div>
@@ -29,8 +29,8 @@
             <div x-data="collapseTracker(false, 'search-options')" x-bind="binds" class="row mb-3 filterRow">
 
                 <div class="col-4 col-md-12 text-center">
-                    <h3 class="fs-5 my-1">Filter Options</h3>
-                    <div class="btn-group-vertical w-100 mb-2">
+                    <h3 class="fs-5 my-1 mb-2">Filter Options</h3>
+                    <div class="btn-group w-100 mb-2">
                         <button
                             class="btn btn-success"
                             type="button"
@@ -39,9 +39,9 @@
                             aria-controls="optionsFilterCheckboxes"
                             aria-label="Show / hide Options filters"
                             title="Show / hide Options filters"
-                            x-text="`${show ? 'Hide' : 'Show'} Filters`"
+                            x-text="`${show ? 'Hide' : 'Show'}`"
                             :aria-expanded="show"
-                        >Show Filters</button>
+                        >Show</button>
                         <button
                             class="btn btn-secondary"
                             type="button"
@@ -49,7 +49,7 @@
                             :aria-label="`Clear ${options.length} Options filters`"
                             title="Clear Options filters"
                         >
-                            Clear Filters&nbsp;
+                            Clear &nbsp;
                             <span class="badge text-bg-light" x-text="options.length">0</span>
                         </button>
                     </div>
@@ -87,8 +87,8 @@
             <div x-data="collapseTracker(false, 'search-tactic')" x-show="showFilter(['techniques'], options)" x-bind="binds" class="row mb-3 filterRow">
 
                 <div class="col-4 col-md-12 text-center">
-                    <h3 class="fs-5 my-1">Filter Tactics</h3>
-                    <div class="btn-group-vertical w-100 mb-2">
+                    <h3 class="fs-5 my-1 mb-2">Filter Tactics</h3>
+                    <div class="btn-group w-100 mb-2">
                         <button
                             class="btn btn-success"
                             type="button"
@@ -97,9 +97,9 @@
                             aria-controls="tacticFilterCheckboxes"
                             aria-label="Show / hide Tactic filters"
                             title="Show / hide Tactic filters"
-                            x-text="`${show ? 'Hide' : 'Show'} Filters`"
+                            x-text="`${show ? 'Hide' : 'Show'}`"
                             :aria-expanded="show"
-                        >Show Filters</button>
+                        >Show</button>
                         <button
                             class="btn btn-secondary"
                             type="button"
@@ -107,7 +107,7 @@
                             :aria-label="`Clear ${tactics.length} tactic filters`"
                             title="Clear tactic filters"
                         >
-                            Clear Filters&nbsp;
+                            Clear&nbsp;
                             <span class="badge text-bg-light" x-text="tactics.length">0</span>
                         </button>
                     </div>
@@ -145,8 +145,8 @@
             <div x-data="collapseTracker(false, 'search-mitigation-source')" x-show="showFilter(['mitigations', 'mitigation_uses'], options)" x-bind="binds" class="row mb-3 filterRow">
 
                 <div class="col-4 col-md-12 text-center">
-                    <h3 class="fs-5 my-1">Filter Mitigation Sources</h3>
-                    <div class="btn-group-vertical w-100 mb-2">
+                    <h3 class="fs-5 my-1 mb-2">Filter Mitigation Sources</h3>
+                    <div class="btn-group w-100 mb-2">
                         <button
                             class="btn btn-success"
                             type="button"
@@ -155,9 +155,9 @@
                             aria-controls="mitigationSrcFilterCheckboxes"
                             aria-label="Show / hide Mitigation Source filters"
                             title="Show / hide Mitigation Source filters"
-                            x-text="`${show ? 'Hide' : 'Show'} Filters`"
+                            x-text="`${show ? 'Hide' : 'Show'}`"
                             :aria-expanded="show"
-                        >Show Filters</button>
+                        >Show</button>
                         <button
                             class="btn btn-secondary"
                             type="button"
@@ -165,7 +165,7 @@
                             :aria-label="`Clear ${mitigation_sources.length} mitigation source filters`"
                             title="Clear mitigation source filters"
                         >
-                            Clear Filters&nbsp;
+                            Clear&nbsp;
                             <span class="badge text-bg-light" x-text="mitigation_sources.length">0</span>
                         </button>
                     </div>
@@ -203,8 +203,8 @@
             <div x-data="collapseTracker(false, 'search-platform')" x-show="showFilter(['techniques'], options)" x-bind="binds" class="row mb-3 filterRow">
 
                 <div class="col-4 col-md-12 text-center">
-                    <h3 class="fs-5 my-1">Filter Platforms</h3>
-                    <div class="btn-group-vertical w-100 mb-2">
+                    <h3 class="fs-5 my-1 mb-2">Filter Platforms</h3>
+                    <div class="btn-group w-100 mb-2">
                         <button
                             class="btn btn-success"
                             type="button"
@@ -213,9 +213,9 @@
                             aria-controls="platformFilterCheckboxes"
                             aria-label="Show / hide Platform filters"
                             title="Show / hide Platform filters"
-                            x-text="`${show ? 'Hide' : 'Show'} Filters`"
+                            x-text="`${show ? 'Hide' : 'Show'}`"
                             :aria-expanded="show"
-                        >Show Filters</button>
+                        >Show</button>
                         <button
                             class="btn btn-secondary"
                             type="button"
@@ -223,7 +223,7 @@
                             :aria-label="`Clear ${platforms.length} platform filters`"
                             title="Clear platform filters"
                         >
-                            Clear Filters&nbsp;
+                            Clear&nbsp;
                             <span class="badge text-bg-light" x-text="platforms.length">0</span>
                         </button>
                     </div>
@@ -261,8 +261,8 @@
             <div x-data="collapseTracker(false, 'search-data-source')" x-show="showFilter(['techniques'], options)" x-bind="binds" class="row mb-3 filterRow">
 
                 <div class="col-4 col-md-12 text-center">
-                    <h3 class="fs-5 my-1">Filter Data Sources</h3>
-                    <div class="btn-group-vertical w-100 mb-2">
+                    <h3 class="fs-5 my-1 mb-2">Filter Data Sources</h3>
+                    <div class="btn-group w-100 mb-2">
                         <button
                             class="btn btn-success"
                             type="button"
@@ -271,9 +271,9 @@
                             aria-controls="dataSrcFilterCheckboxes"
                             aria-label="Show / hide Data Source filters"
                             title="Show / hide Data Source filters"
-                            x-text="`${show ? 'Hide' : 'Show'} Filters`"
+                            x-text="`${show ? 'Hide' : 'Show'}`"
                             :aria-expanded="show"
-                        >Show Filters</button>
+                        >Show</button>
                         <button
                             class="btn btn-secondary"
                             type="button"
@@ -281,7 +281,7 @@
                             :aria-label="`Clear ${data_sources.length} data source filters`"
                             title="Clear data source filters"
                         >
-                            Clear Filters&nbsp;
+                            Clear&nbsp;
                             <span class="badge text-bg-light" x-text="data_sources.length">0</span>
                         </button>
                     </div>
@@ -328,10 +328,10 @@
 
                     <div class="form-floating">
                         <input placeholder="Search Techniques" type="search" id="fullTechniqueSearchBox" class="form-control mb-1" x-model.debounce="search">
-                        <label for="fullTechniqueSearchBox">Search Techniques</label>
+                        <label for="fullTechniqueSearchBox">Search</label>
                     </div>
                     <p x-cloak x-show="searchStatus.length > 0" class="mb-0">
-                        <strong aria-label="Search Status">Status:</strong> <span x-text="searchStatus" class="text-break"></span>
+                        <strong aria-label="Search Status">Query:</strong> <span x-text="searchStatus" class="text-break"></span>
                     </p>
 
                 </div>
@@ -350,7 +350,7 @@
                             <div class="answer-card technique-card card h-100">
                                 <h3
                                     class="card-header fs-6"
-                                    x-html="`Technique: ${card.tech_name} [<a class='top-link' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
+                                    x-html="`Technique: ${card.tech_name} [<a class='top-link' target='_blank' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
                                 ></h3>
 
                                 <div class="card-body">
@@ -388,7 +388,7 @@
                             <div class="answer-card mitigation-use-card card h-100">
                                 <h3
                                     class="card-header fs-6"
-                                    x-html="`Mitigation Use: (${card.card_id_plain}) [${card.mit_src_display_name}]`"
+                                    x-html="`Mitigation Use: ${card.card_id_plain} [${card.mit_id}]`"
                                 ></h3>
     
                                 <div class="card-body">
