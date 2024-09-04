@@ -107,31 +107,25 @@ def main():
 
         print("Loading sources..")
 
-        if args.test:
-            print("Running in test mode. Skipping user and role loading.")
+        if src_mgr.role.load_validate():
+            print("Role loaded.")
         else:
-            print("\n------------------------------------------------\n")
-            # Role - required
+            print("Role is needed for Decider to function. Exiting.")
+            sys.exit(2)
 
-            if src_mgr.role.load_validate():
-                print("Role loaded.")
-            else:
-                print("Role is needed for Decider to function. Exiting.")
-                sys.exit(2)
+        print("\n------------------------------------------------\n")
+        # User - required
 
-            print("\n------------------------------------------------\n")
-            # User - required
+        if not src_mgr.user.load_validate():
+            print("User is needed for Decider to function. Exiting.")
+            sys.exit(3)
+        elif len(src_mgr.user.get_data()) == 0:
+            print("At least one user must be defined in the user.json file. Exiting.")
+            sys.exit(4)
+        else:
+            print("User loaded.")
 
-            if not src_mgr.user.load_validate():
-                print("User is needed for Decider to function. Exiting.")
-                sys.exit(3)
-            elif len(src_mgr.user.get_data()) == 0:
-                print("At least one user must be defined in the user.json file. Exiting.")
-                sys.exit(4)
-            else:
-                print("User loaded.")
-
-            print("\n------------------------------------------------\n")
+        print("\n------------------------------------------------\n")
         # ATT&CK content - 1+ required
 
         attack_versions = {v for v in src_mgr.attack.keys() if src_mgr.attack[v].load_validate()}
@@ -271,14 +265,13 @@ def main():
             sys.exit(7)
 
         # add Roles and Users
-        if not args.test:
-            try:
-                db_create.role.add_all(src_mgr)
-                db_create.user.add_all(src_mgr)
-            except Exception as ex:
-                tfail = time.time() - t0
-                print(f"Failed to add Roles and Users at {tfail:.1f}s into build - due to:\n{ex}")
-                sys.exit(8)
+        try:
+            db_create.role.add_all(src_mgr)
+            db_create.user.add_all(src_mgr)
+        except Exception as ex:
+            tfail = time.time() - t0
+            print(f"Failed to add Roles and Users at {tfail:.1f}s into build - due to:\n{ex}")
+            sys.exit(8)
 
         for version in install_versions:
             print(f"\nAdding ATT&CK content for version {version}\n")

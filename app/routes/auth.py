@@ -11,6 +11,10 @@ from flask import (
     session,
     g,
 )
+
+from flask import Flask, redirect, url_for, session, request, jsonify
+from flask_session import Session
+
 from flask_login import login_user, logout_user, current_user
 from flask_principal import identity_changed, Identity, AnonymousIdentity, Permission, RoleNeed
 
@@ -19,12 +23,30 @@ from app.models import db, User
 from uuid import uuid4
 import bcrypt
 
+import identity.web
+import requests
+import app.env_vars as env_vars
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 from app.routes.utils import email_validator
 from app.routes.utils import ErrorDuringHTMLRoute, wrap_exceptions_as
 
 logger = logging.getLogger(__name__)
 auth_ = Blueprint("auth_", __name__, template_folder="templates")
+__version__ = "0.8.0"  # The version of this sample, for troubleshooting purpose
 
+def oauth_setup(app):
+    app.config.from_object(env_vars)
+    assert app.config["REDIRECT_PATH"] != "/", "REDIRECT_PATH must not be /"
+    Session(app)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+    app.jinja_env.globals.update(Auth=identity.web.Auth)  # Useful in template for B2C
+    app.auth = identity.web.Auth(
+        session=session,
+        authority=app.config["AUTHORITY"],
+        client_id=app.config["CLIENT_ID"],
+        client_credential=app.config["CLIENT_SECRET"],
+    )
 
 # a role mentioned in permission means it has access there
 admin_permission = Permission(RoleNeed("admin"))
@@ -37,7 +59,6 @@ def public_route(func):
     func.is_public = True
     return func
 
-
 def disabled_in_kiosk(func):
     """Decorator to make a route wholly inaccessible in kiosk-mode"""
     func.disabled_in_kiosk = True
@@ -49,6 +70,11 @@ def disabled_in_kiosk(func):
 @public_route
 @wrap_exceptions_as(ErrorDuringHTMLRoute)
 def login():
+    return render_template("login.html", version=__version__, **current_app.auth.log_in(
+        scopes=current_app.config["SCOPE"], # Have user consent to scopes during log-in
+        redirect_uri=url_for("auth_.auth_response", _external=True), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Azure Portal
+        prompt="select_account",  # Optional. More values defined in  https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+        ))
     """Returns login page (HTML response)"""
     g.route_title = "Login Page"
 
@@ -59,6 +85,51 @@ def login():
     else:
         logger.info("serving page")
         return render_template("login.html")
+
+
+@auth_.route(env_vars.REDIRECT_PATH)
+@public_route
+def auth_response():
+    result = current_app.auth.complete_log_in(request.args)
+    email = result['preferred_username']
+    
+    user = User.query.filter_by(email=email).first()
+    user.session_token = str(uuid4())
+    
+    if "error" in result:
+        return render_template("auth_error.html", result=result)
+    
+    try:
+        logger.debug(f"attempting to set {email}'s session token on DB")
+        db.session.commit()
+        logger.info(f"successfully set {email}'s session token on DB")
+
+        # Tell Flask-Principal the identity changed
+        identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+
+        login_user(user)
+        logger.info(f"login successful ({email})")
+        return redirect(url_for("question_.home"))
+
+    except Exception:
+        db.session.rollback()
+        flash("Failed to log you in / set session token.")
+        logger.exception(f"failed to set {email}'s session token on DB (failed to log them in)")
+        return redirect(url_for("auth_.login"))
+
+
+@auth_.route("/call_downstream_api")
+def call_downstream_api():
+    token = current_app.auth.get_token_for_user(env_vars.SCOPE)
+    if "error" in token:
+        return redirect(url_for("login"))
+    # Use access token to call downstream api
+    api_result = requests.get(
+        env_vars.ENDPOINT,
+        headers={'Authorization': 'Bearer ' + token['access_token']},
+        timeout=30,
+    ).json()
+    return render_template('display.html', result=api_result)
 
 
 @auth_.route("/login", methods=["POST"])
