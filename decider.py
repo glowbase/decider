@@ -194,6 +194,34 @@ def kiosk_mode(app):
         # everybody is a member now
         identity.provides.add(RoleNeed("member"))
 
+def dev_mode(app):
+    """Configures the environment for development mode
+    - reload Flask on file modification
+    - grant Admin and Editing roles to every user (including anonymous)
+    """
+
+    @app.before_request
+    def before_request():
+        g.request_id = make_request_id()
+
+    @app.after_request
+    def after_request(response):
+        response.cache_control.max_age = 1
+        return response
+
+    @identity_loaded.connect_via(app)
+    def on_identity_loaded(sender, identity):
+        # Set the identity user object
+        identity.user = current_user
+
+        # Add the UserNeed to the identity
+        if hasattr(current_user, "id"):
+            identity.provides.add(UserNeed(current_user.id))
+
+        # give all users including Anonymous user admin and editor
+        identity.provides.add(RoleNeed("member"))
+        identity.provides.add(RoleNeed("editor"))
+        identity.provides.add(RoleNeed("admin"))
 
 def prod_mode(app):
     """Configures the environment for production mode"""
@@ -248,10 +276,12 @@ def set_mode(app):
     with app.app_context():
         if current_app.config.get("KIOSK_MODE"):
             kiosk_mode(app)
+        elif current_app.config.get("DEV_MODE"):
+            dev_mode(app)
         else:
-            logger.error("Only the Kiosk (KioskConfig) is supported in this build! Exiting!")
-            sys.exit(1)
-            # prod_mode(app)
+            # logger.error("Only the Kiosk (KioskConfig) is supported in this build! Exiting!")
+            # sys.exit(1)
+            prod_mode(app)
 
 
 def context_setup(app):
