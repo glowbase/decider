@@ -12,7 +12,6 @@ def add_all(src_mgr):
 
     # enumerates entries and clears values that get set in-app
     for ind, entry in enumerate(user_data):
-        entry["id"] = ind
         entry["session_token"] = None
         entry["last_attack_ver"] = None
         if(entry["password"] is not None and len(entry["password"]) > 0):
