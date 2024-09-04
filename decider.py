@@ -19,7 +19,7 @@ from app.routes.utils import ErrorDuringRoute, ErrorDuringHTMLRoute
 
 from app.models import AttackVersion, db, User
 
-from app.routes.auth import auth_
+from app.routes.auth import auth_, oauth_setup
 from app.routes.profile import profile_
 from app.routes.question import question_
 from app.routes.search import search_
@@ -418,6 +418,7 @@ def create_app(config):
     set_mode(app)
     context_setup(app)
     error_handlers(app)
+    oauth_setup(app)
 
     return app
 
