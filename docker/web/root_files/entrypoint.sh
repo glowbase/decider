@@ -68,11 +68,6 @@ if [ -z "$APP_ADMIN_PASS" ]; then
     exit 1
 fi
 
-# kiosk mode is off (only kiosk is supported)
-if [ -z "$KIOSK_MODE" ]; then
-    echo "You set KIOSK_MODE='', this is ignored, as only kiosk is supported in this build."
-fi
-
 # ------------------------------------------------------------------------------
 
 cd /opt/decider
@@ -143,14 +138,22 @@ if [ "$SOURCES_CHANGED" = "yes" ]; then
     python -m app.utils.db.actions.full_build --config DefaultConfig
 fi
 
+CONFIG="$CONFIG"
+
+if [ -z "$CONFIG" ]; then
+    CONFIG="kiosk"
+    exit 1
+fi
+
+
 # HTTP:
 if [ -z "$WEB_HTTPS_ON" ]; then
 
     echo ""
     print_started_text
-    echo "Decider as a Kiosk in ${COLOR_IRED}HTTP${COLOR_OFF} mode"
+    echo "Decider as a ${CONFIG} in ${COLOR_IRED}HTTP${COLOR_OFF} mode"
     echo "${COLOR_ICYAN}http://${WEB_IP}:${WEB_PORT}/${COLOR_OFF}\n"
-    uwsgi --ini uwsgi-http-kiosk.ini
+    uwsgi --ini uwsgi-http-${CONFIG}.ini
 
 # HTTPS:
 else
@@ -184,7 +187,7 @@ else
 
     echo ""
     print_started_text
-    echo "Decider as a Kiosk in ${COLOR_IGREEN}HTTPS${COLOR_OFF} mode"
+    echo "Decider as a ${CONFIG} in ${COLOR_IGREEN}HTTPS${COLOR_OFF} mode"
     echo "${COLOR_ICYAN}https://${WEB_IP}:${WEB_PORT}/${COLOR_OFF}\n"
-    uwsgi --ini uwsgi-https-kiosk.ini
+    uwsgi --ini uwsgi-https-${CONFIG}.ini
 fi

@@ -350,7 +350,7 @@ def main():
                 sys.exit(13)
 
         # db kiosk user
-        print("\nCreate Kiosk user\n")
+        print("\nCreating users\n")
 
         try:
             db_create.kiosk_user()

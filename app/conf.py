@@ -43,6 +43,15 @@ class DefaultConfig(Config):
         database=DB_DATABASE,
     )
 
+class ProductionConfig(Config):
+    SQLALCHEMY_DATABASE_URI = sqlalch.engine.URL.create(
+        drivername="postgresql",
+        username=DB_ADMIN_NAME,
+        password=DB_ADMIN_PASS,
+        host=DB_HOSTNAME,
+        port=DB_PORT,
+        database=DB_DATABASE,
+    )
 
 class KioskConfig(Config):
     """Kiosk-Mode
