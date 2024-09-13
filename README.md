@@ -31,8 +31,7 @@ Decider does not intend to replace the ATT&amp;CK site - but rather, it acts as 
 git clone https://github.com/cisagov/decider.git
 cd decider
 cp .env.docker .env
-# edit .env - define DB_ADMIN_PASS, DB_KIOSK_PASS, CART_ENC_KEY, APP_ADMIN_PASS
-# no default passwords are given :)
+# edit .env
 cp -r default_config/. config/
 sudo docker compose up
 ```
