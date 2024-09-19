@@ -7,7 +7,9 @@
   <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
 </ol>
 {% else %}
-<ul><li><a href='{{ auth_uri }}'>Sign In</a></li></ul>
+<div class="row">
+<a href='{{ auth_uri }}'><img src="/static/ms-symbollockup_signin_light.svg" /></a>
+</div>
 {% endif %}
 
 {% if config.get("B2C_RESET_PASSWORD_AUTHORITY") %}

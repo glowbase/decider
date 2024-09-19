@@ -43,9 +43,9 @@ def oauth_setup(app):
     app.jinja_env.globals.update(Auth=identity.web.Auth)  # Useful in template for B2C
     app.auth = identity.web.Auth(
         session=session,
-        authority=app.config["AUTHORITY"],
-        client_id=app.config["CLIENT_ID"],
-        client_credential=app.config["CLIENT_SECRET"],
+        authority=app.config["ENTRA_AUTHORITY"],
+        client_id=app.config["ENTRA_CLIENT_ID"],
+        client_credential=app.config["ENTRA_CLIENT_SECRET"],
     )
 
 # a role mentioned in permission means it has access there

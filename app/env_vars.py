@@ -47,12 +47,12 @@ try:
     else:  # This branch is for AAD or CIAM
         # You can configure your authority via environment variable
         # Defaults to a multi-tenant app in world-wide cloud
-        AUTHORITY = os.getenv("AUTHORITY") or "https://login.microsoftonline.com/common"
+        ENTRA_AUTHORITY = os.getenv("ENTRA_AUTHORITY") or "https://login.microsoftonline.com/common"
 
     # Application (client) ID of app registration
-    CLIENT_ID = os.getenv("CLIENT_ID")
+    ENTRA_CLIENT_ID = os.getenv("ENTRA_CLIENT_ID")
     # Application's generated client secret: never check this into source control!
-    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+    ENTRA_CLIENT_SECRET = os.getenv("ENTRA_CLIENT_SECRET")
 
     REDIRECT_PATH = "/token_response"  # Used for forming an absolute URL to your redirect URI.
     # The absolute URL must match the redirect URI you set

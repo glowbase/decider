@@ -28,7 +28,7 @@ Decider does not intend to replace the ATT&amp;CK site - but rather, it acts as 
 ### Docker
 
 ```bash
-git clone https://github.com/cisagov/decider.git
+git clone https://github.com/glowbase/decider.git
 cd decider
 cp .env.docker .env
 # edit .env
