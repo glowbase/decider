@@ -15,6 +15,7 @@ from app.models import (
     Tactic,
     Technique,
     Aka,
+    Blurb,
     DataSource,
     Platform,
     Mitigation,
@@ -164,7 +165,8 @@ def search_page():
     logger.debug(f"querying Mitigation Sources in ATT&CK {ver_name} for filters")
     mitigation_source_names = db.session.query(MitigationSource.source).all()
 
-    options_names = ["Techniques","Mitigations","Mitigation Uses"]
+    options_names = ["Techniques", "Usage Examples",
+                     "Mitigations","Mitigation Uses"]
 
     options_filters = checkbox_filters_component(
         "options_fs",
@@ -705,6 +707,102 @@ def mitigation_use_search(search_tsqry, mitigation_sources, version):
     
     return results
 
+def usage_example_search(search_tsqry, mitigation_sources, version):
+    results = []
+    
+    tsvec = PSQLTxt.multiline_cleanup(
+        """
+        blurb.blurb_ts 
+    """
+    )
+
+    # filter Blurbs then generate tsvecs for remaining
+    logger.debug("querying Usage Example selections and ranked by relevance")
+    
+    blurb_subq = (
+        db.session.query(
+            Blurb.uid,  # 0
+            literal_column(tsvec).label("tsvec"),  # 1
+            literal_column(search_tsqry).label("tsqry"),  # 2
+        )
+        .join(Technique, Technique.uid == Blurb.technique)
+        .filter(Technique.attack_version == version)
+    ).subquery()    
+
+    # get techniques matching search tsquery
+    generate_existing = (db.session.query(blurb_subq, literal_column("tsvec @@ tsqry").label("exists"))).subquery()
+
+    # filter non-matching and get scores - returns IDs and their scores, pull into dict
+    filter_and_scoreq = (
+        db.session.query(
+            generate_existing.c.uid,
+            literal_column("ts_rank(tsvec, tsqry)").label("score"),
+        ).filter(generate_existing.c.exists)
+    )
+    
+    filter_and_score = filter_and_scoreq.all()
+
+    print(f"got {len(filter_and_score)} matching Usage Examples")
+    blurb_to_score = {blurb: score for blurb, score in filter_and_score}
+
+    # fetch details of matching blurbs
+    print("querying details for the earlier-matched Uses for Technique Mitigation")
+    result_subq = (
+        db.session.query(
+            Blurb.uid,  # 0
+            Blurb.sentence.regexp_replace('(<sup.*\\/sup>|\\(http.*?\\))', '', 'g').regexp_replace('([^\\[]*)\\[(.*?)\\](.*)', '\\2', 'g').label("use_threat_actor"), # 1
+            Technique.tech_id, # 2
+            Technique.tech_name, # 3
+            Blurb.sentence,  # 4
+        )
+        .join(Technique, Technique.uid == Blurb.technique)
+        .filter(Blurb.uid.in_(list(blurb_to_score.keys())))
+    ).subquery()
+
+    result_q = (
+        db.session.query(
+            result_subq
+        )
+    ).all()
+
+    logger.debug("query finished")
+
+    # build response
+    for (
+        uid,
+        use_threat_actor,
+        tech_id,
+        tech_name,
+        sentence,
+    ) in result_q:
+        # for ts_headlined descriptions - finish off any ... between snippets
+        if len(use_threat_actor) > 50:
+            tdesc = use_threat_actor.replace("<red>", '<span class="redtext">').replace("</red>", "</span>")
+
+        # if no terms are matched in the description - get the first 250 chars, cut to last space, and add ... in red
+        else:
+            cleaned_desc = bleach.clean(markdown.markdown(sentence), tags=[], strip=True)[:250]
+            cleaned_desc = cleaned_desc[: cleaned_desc.rfind(" ")]
+            tdesc = f'{cleaned_desc}<span class="redtext">...</span>'
+
+        results.append(
+            {
+                "card_id_plain": uid,
+                "usage_example": True,
+                "tech_id": tech_id,
+                "technique_name": tech_name,
+                "use": tdesc,    
+                "actor": use_threat_actor,
+                "internal_url": url_for(
+                    "question_.notactic_success", version=version, subpath=tech_id.replace(".", "/")
+                ),
+                "score": blurb_to_score[uid],
+            }
+        )
+    
+    return results
+
+
 @search_.route("/search/full", methods=["GET"])
 @wrap_exceptions_as(ErrorDuringAJAXRoute)
 def full_search():
@@ -759,7 +857,10 @@ def full_search():
     
     if (options is None or len(options) == 0) or "mitigation_uses" in options:
         results.extend(mitigation_use_search(search_tsqry, mitigation_sources, version))
-            
+    
+    if (options is None or len(options) == 0) or "usage_examples" in options:
+        results.extend(usage_example_search(search_tsqry, mitigation_sources, version))
+                
     # order by match score and then Tech ID
     results.sort(key=lambda t: (-t["score"])) #, float(t["card_id_plain"][1:])))
     

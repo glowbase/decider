@@ -403,6 +403,25 @@
                                 </div>
                             </div>
                         </template>
+                        <template x-if="card.usage_example">
+                            <div class="answer-card mitigation-use-card card h-100">
+                                <h3
+                                    class="card-header fs-6"
+                                    x-html="`Usage Example: ${card.actor} [${card.tech_id}]`"
+                                ></h3>
+    
+                                <div class="card-body">
+                                    <div class="card-text" x-html="card.use"></div>
+                                </a>
+        
+                                    <a
+                                            class="link-strong-blue card-link stretched-link"
+                                            :href="resolveURL(card.internal_url)"
+                                            :aria-label="`Select Card ${card.actor} ${card.tech_id}`"
+                                    ></a>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </template>
 
