@@ -37,6 +37,30 @@ def add_technique_search_index():
     )
     db.session.commit()
 
+    db.session.execute(
+        r"""
+    DROP INDEX IF EXISTS blurb_ts_index;
+    ALTER TABLE blurb DROP COLUMN IF EXISTS blurb_ts;
+
+    ALTER TABLE blurb ADD COLUMN blurb_ts tsvector
+        GENERATED ALWAYS AS
+            (
+                (setweight(to_tsvector('english_nostop',
+                imm_unaccent(regexp_replace(
+                                regexp_replace(sentence, '(<sup.*?\/sup>|\(http.*?\))', '', 'g'),
+                                '([^\[]*)\[(.*?)\](.*)', '\2', 'g'
+                            ))
+                ), 'A') ||
+                setweight(to_tsvector('english_nostop',
+                    imm_unaccent(regexp_replace(
+                    regexp_replace(sentence, '(<sup.*?\/sup>|\(http.*?\))', '', 'g'),
+                    '[\[\]]', '', 'g'
+                ))), 'B'))
+            ) STORED;
+    CREATE INDEX blurb_ts_index ON blurb USING gist(blurb_ts);
+    """.strip()
+    )
+    db.session.commit()
 
 @messaged_timer("Add Facilities for Answer Card Search")
 def add_technique_answer_search_facilities():

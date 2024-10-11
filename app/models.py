@@ -128,6 +128,7 @@ class Blurb(db.Model):
     file_name = db.Column(db.Text, nullable=False)
     url = db.Column(db.Text, nullable=False)
     sentence = db.Column(db.Text, nullable=False)
+    blurb_ts = db.Column(TSVECTOR)  # based on sentence
 
 
 class Mismapping(db.Model):
