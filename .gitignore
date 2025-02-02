@@ -32,4 +32,5 @@ UNKNOWN.egg-info/
 # Local working notes / tools
 /scratch/
 
-config/**
+# Mapping Data
+config/build_sources/mappings/*.json
