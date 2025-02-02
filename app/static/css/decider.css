@@ -245,7 +245,7 @@ body {
 /* BG Secondary | DHS Dark Gray */
 .text-bg-secondary {
     color: #fff !important;
-    background-color: RGBA(var(--dhs-dark-gray-rgb), var(--bs-bg-opacity, 1)) !important;
+    background-color: var(--dhs-blue) !important;
 }
 
 /* Check | DHS Blue */
@@ -502,6 +502,8 @@ strong {
 
 .badge {
     font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 20px;
 }
 
 .badge-group .badge + .badge {

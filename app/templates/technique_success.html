@@ -65,7 +65,6 @@
         {# Add to Cart #}
         <div x-data="successAddToCart" class="d-flex justify-content-end">
             <div>
-                <label for="successTacticSelect">Map Technique Under Tactic:</label>
                 <div class="input-group">
                     <select
                         class="form-select"
@@ -151,6 +150,7 @@
     </section>
 
     {# Remediations #}
+    {% if success.mitigations %}
     <section>
         <h2 class="fs-3">Remediation</h2>
         <template x-for="(mit_set, index) in $store.success.mitigations">
@@ -177,6 +177,7 @@
             </span>
         </template>
     </section>
+    {% endif %}
 
     {# Mismappings #}
     {% if success.mismappings |length > 0 %}
