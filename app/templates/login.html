@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container p-5 col-md-6 col-md-offset-3">
 
-    <h3 class="title">Login</h3>
+    <h3 class="title mb-3">Login</h3>
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     <div class="notification is-danger">
@@ -11,22 +11,21 @@
     </div>
     {% endif %}
     {% endwith %}
-    <div class="p-3 card mb-3">
+    <div class="mb-3">
         <form method="POST" action="/login" autocomplete="off">
             <div class="mb-3">
-                <input class="form-control" type="email" name="email" placeholder="Your Email" autofocus="" maxlength="320" autocomplete="off">
+                <input class="form-control" type="email" name="email" placeholder="Email" autofocus="" maxlength="320" autocomplete="off">
             </div>
             <div class="mb-3">
-                <input class="form-control" type="password" name="password" placeholder="Your Password" maxlength="65" autocomplete="off">
+                <input class="form-control" type="password" name="password" placeholder="Password" maxlength="65" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             </div>
-            <div>
+            <div class="d-grid gap-2">
                 <button class="btn btn-primary">Login</button>
+                {% include 'sso_partial.html' %}
             </div>
         </form>
     </div>
-
-{% include 'sso_partial.html' %}
 
 </div>
 {% endblock %}

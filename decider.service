@@ -1,7 +1,0 @@
-[Unit]
-Description = Decider
-[Service]
-Type=simple
-ExecStart=/opt/decider/venv/bin/uwsgi --ini /opt/decider/uwsgi.ini
-[Install]
-WantedBy=multi-user.target

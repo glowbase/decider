@@ -7,16 +7,16 @@
 {% block content %}
 
 <div x-data="fullSearchPage" class="container-fluid">
-
+    <!-- 
     {# Header #}
     <div class="row">
         <div class="col-12 col-md-9 offset-md-3 col-xl-10 offset-xl-2">
 
             {# Page Title #}
-            <h1 class="fs-3 mb-3">Full Text Search</h1>
+            <h1 class="fs-3 mb-3">Search</h1>
 
         </div>
-    </div>
+    </div> -->
 
     {# Body #}
     <div class="row">
@@ -32,7 +32,7 @@
                     <h3 class="fs-5 my-1 mb-2">Filter Options</h3>
                     <div class="btn-group w-100 mb-2">
                         <button
-                            class="btn btn-success"
+                            class="btn btn-primary"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#optionsFilterCheckboxes"
@@ -90,7 +90,7 @@
                     <h3 class="fs-5 my-1 mb-2">Filter Tactics</h3>
                     <div class="btn-group w-100 mb-2">
                         <button
-                            class="btn btn-success"
+                            class="btn btn-primary"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#tacticFilterCheckboxes"
@@ -148,7 +148,7 @@
                     <h3 class="fs-5 my-1 mb-2">Filter Mitigation Sources</h3>
                     <div class="btn-group w-100 mb-2">
                         <button
-                            class="btn btn-success"
+                            class="btn btn-primary"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#mitigationSrcFilterCheckboxes"
@@ -206,7 +206,7 @@
                     <h3 class="fs-5 my-1 mb-2">Filter Platforms</h3>
                     <div class="btn-group w-100 mb-2">
                         <button
-                            class="btn btn-success"
+                            class="btn btn-primary"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#platformFilterCheckboxes"
@@ -264,7 +264,7 @@
                     <h3 class="fs-5 my-1 mb-2">Filter Data Sources</h3>
                     <div class="btn-group w-100 mb-2">
                         <button
-                            class="btn btn-success"
+                            class="btn btn-primary"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#dataSrcFilterCheckboxes"
@@ -327,13 +327,12 @@
                     <h2 class="visually-hidden">Search</h2>
 
                     <div class="form-floating">
-                        <input placeholder="Search Techniques" type="search" id="fullTechniqueSearchBox" class="form-control mb-1" x-model.debounce="search">
-                        <label for="fullTechniqueSearchBox">Search</label>
+                        <input placeholder="Search Techniques" type="search" id="fullTechniqueSearchBox" class="form-control mb-1" style="margin-top: 2px;" x-model.debounce="search">
+                        <label for="fullTechniqueSearchBox">Query</label>
                     </div>
-                    <p x-cloak x-show="searchStatus.length > 0" class="mb-0">
+                    <!-- <p x-cloak x-show="searchStatus.length > 0" class="mb-0">
                         <strong aria-label="Search Status">Query:</strong> <span x-text="searchStatus" class="text-break"></span>
-                    </p>
-
+                    </p> -->
                 </div>
             </div>
 
@@ -350,27 +349,25 @@
                             <div class="answer-card technique-card card h-100">
                                 <h3
                                     class="card-header fs-6"
-                                    x-html="`Technique: ${card.tech_name} [<a class='top-link' target='_blank' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
+                                    x-html="`${card.tech_name} [<a class='top-link' target='_blank' href='${resolveURL(card.attack_url)}'>${card.tech_id}</a>]`"
                                 ></h3>
-
                                 <div class="card-body">
                                     <div class="card-text" x-html="card.description"></div>
                                 </a>
-
-                                    <a
-                                            class="link-strong-blue card-link stretched-link"
-                                            :href="resolveURL(card.internal_url)"
-                                            :aria-label="`Select Card ${card.tech_name_plain} ${card.card_id_plain}`"
-                                    ></a>
+                                <a
+                                    class="link-strong-blue card-link stretched-link"
+                                    :href="resolveURL(card.internal_url)"
+                                    :aria-label="`Select Card ${card.tech_name_plain} ${card.card_id_plain}`"
+                                ></a>
                                 </div>
                             </div>
                         </template>
                         <template x-if="card.mitigation">
                             <div class="answer-card mitigation-card card h-100">
-                                <h3
-                                    class="card-header fs-6"
-                                    x-html="`Mitigation: ${card.mitigation_name} [${card.card_id_plain}]`"
-                                ></h3>
+                                <h3 class="card-header fs-6" style="display: flex;">
+                                    <div style="background-color: #57df87;border-radius: 50%;height: 20px;width: 20px;border: 2px solid white;"></div>
+                                    <div class="ms-2" x-html="`${card.mitigation_name} [${card.card_id_plain}]`"></div>
+                                </h3>
 
                                 <div class="card-body">
                                     <div class="card-text" x-html="card.description"></div>
@@ -386,10 +383,10 @@
                         </template>
                         <template x-if="card.mitigation_use">
                             <div class="answer-card mitigation-use-card card h-100">
-                                <h3
-                                    class="card-header fs-6"
-                                    x-html="`Mitigation Use: ${card.card_id_plain} [${card.mit_id}]`"
-                                ></h3>
+                                <h3 class="card-header fs-6" style="display: flex;">
+                                    <div style="background-color: #df9b57;border-radius: 50%;height: 20px;width: 20px;border: 2px solid white;"></div>
+                                    <div class="ms-2" x-html="`${card.card_id_plain} [${card.mit_id}]`"></div>
+                                </h3>
     
                                 <div class="card-body">
                                     <div class="card-text" x-html="card.use"></div>
@@ -405,10 +402,10 @@
                         </template>
                         <template x-if="card.usage_example">
                             <div class="answer-card mitigation-use-card card h-100">
-                                <h3
-                                    class="card-header fs-6"
-                                    x-html="`Usage Example: ${card.actor} [${card.tech_id}]`"
-                                ></h3>
+                                <h3 class="card-header fs-6" style="display: flex;">
+                                    <div style="background-color: #df5757;border-radius: 50%;height: 20px;width: 20px;border: 2px solid white;"></div>
+                                    <div class="ms-2" x-html="`${card.actor} [${card.tech_id}]`"></div>
+                                </h3>
     
                                 <div class="card-body">
                                     <div class="card-text" x-html="card.use"></div>

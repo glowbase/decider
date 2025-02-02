@@ -23,7 +23,7 @@
     <link rel="shortcut icon" href="/static/favicon.ico">
     <title>Decider: {% block title %}{% endblock %}</title>
 
-    {% if frontend_conf.use_cdn_resources %}
+    <!-- {% if frontend_conf.use_cdn_resources %}
     {{ user_additions.cdn_css() }}
     {% elif frontend_conf.use_minified_srcs %}
         <link rel="stylesheet" href="/static/css/lib/bootstrap-5.3.0/bootstrap.min.css">
@@ -33,7 +33,11 @@
         <link rel="stylesheet" href="/static/css/lib/bootstrap-5.3.0/bootstrap.css">
         <link rel="stylesheet" href="/static/css/lib/bootstrap-icons-1.10.5/bootstrap-icons.css">
         <link rel="stylesheet" href="/static/css/decider.css">
-    {% endif %}
+    {% endif %} -->
+
+    <link rel="stylesheet" href="/static/css/lib/bootstrap-5.3.0/bootstrap.css">
+    <link rel="stylesheet" href="/static/css/lib/bootstrap-icons-1.10.5/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/decider.css">
 
     {{ user_additions.head_bottom() }}
 </head>
@@ -65,7 +69,7 @@
     {{ user_additions.after_skip_link() }}
 
     {# Navbar #}
-    <nav id="navbar" class="navbar navbar-expand-lg" data-bs-theme="dark">
+    <nav id="navbar" class="navbar navbar-expand-lg" data-bs-theme="light">
         <div class="container-fluid">
 
             {# Decider Home #}
@@ -108,14 +112,14 @@
                             data-bs-toggle="dropdown"
                             aria-expanded="false"
                         >
-                            ATT&amp;CK Enterprise {{ g.version_picker.cur_version }}
+                            {{ g.version_picker.cur_version }}
                         </a>
                         <ul class="dropdown-menu">
                             {% for version in g.version_picker.all_versions %}
                                 {% if version != g.version_picker.cur_version %}
                                     <li>
                                         <a class="dropdown-item underline-hover" href="{{ url_for('question_.question_start_page', version=version ) }}">
-                                            <em>(change to)</em> ATT&amp;CK Enterprise {{ version }}
+                                            {{ version }}
                                         </a>
                                     </li>
                                 {% endif %}
@@ -126,15 +130,14 @@
                 </ul>
 
                 <!-- Profile -->
-                <div class="mb-2 mb-lg-0 flex-grow-1 ms-auto">
+                <!-- <div class="mb-2 mb-lg-0 flex-grow-1 ms-auto">
                     <a href="/profile" class="btn btn-light btn-border-dark underline-hover">
                         Profile
                     </a>
-                    <!-- Logout -->
                     <a href="/logout" class="btn btn-light btn-border-dark underline-hover">
                         Logout
                     </a>
-                </div>
+                </div> -->
 
                 {# Mini Technique Search #}
                 <div
@@ -151,7 +154,7 @@
                         type="search"
                         id="navMiniSearchInput"
                         autocomplete="off"
-                        placeholder="Search Tech Names / IDs"
+                        placeholder="Search"
                         x-model.debounce="search"
                         @focus="onFocus"
                         @blur="onBlur"
@@ -227,31 +230,43 @@
                 </div>
 
                 {# Buttons #}
-                <div class="btn-group mb-2 mb-lg-0 ms-0 ms-lg-2 nav-btn-group" role="group">
+                <!-- <div class="btn-group mb-2 mb-lg-0 ms-0 ms-lg-2 nav-btn-group" role="group"> -->
 
                     {# Full Search Link #}
-                    <a
+                    <!-- <a
                         x-data
                         :href="resolveURL(`/search/page?version=${encodeURIComponent(Alpine.store('global').versionPicker.cur_version)}&search=`)"
                         class="btn btn-light btn-border-dark underline-hover"
                         aria-label="Full Technique Search"
                     >Full Search <i class="bi bi-search" aria-hidden="true"></i>
-                    </a>
+                    </a> -->
 
                     {# Toggle Cart Offcanvas #}
-                    <button
-                        class="btn btn-light btn-border-dark"
-                        type="button"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#shoppingCart"
-                        aria-controls="shoppingCart"
-                        aria-label="Open CTI Shopping Cart"
-                    >Cart <i class="bi bi-cart" aria-hidden="true"></i>
+                    
+                <!-- </div> -->
+
+                <button
+                    class="btn btn-light btn-border-dark ms-2"
+                    type="button"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#shoppingCart"
+                    aria-controls="shoppingCart"
+                    aria-label="Open CTI Shopping Cart"
+                >Cart <i class="bi bi-cart" aria-hidden="true"></i>
+                </button>
+
+                <div class="dropdown">
+                    <button class="ms-2" style="padding: 8px 11px; background-color: #000; color: #fff; border-radius: 50%; border-color: #fff;" type="button" id="accountDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        CB
                     </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                        <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" style="color: red;" href="/logout">Logout</a></li>
+                    </ul>
                 </div>
             </div>
             {% endif %}
-
         </div>
     </nav>
 

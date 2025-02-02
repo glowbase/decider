@@ -1,15 +1,13 @@
 {% if user_code %}
 <ol>
   <li>To sign in, type <b>{{ user_code }}</b> into
-    <a href='{{ auth_uri }}' target=_blank>{{ auth_uri }}</a>
-    to authenticate.
+	<a href='{{ auth_uri }}' target=_blank>{{ auth_uri }}</a>
+	to authenticate.
   </li>
   <li>And then <a href="{{ url_for('auth_response') }}">proceed</a>.</li>
 </ol>
 {% else %}
-<div class="row">
-<a href='{{ auth_uri }}'><img src="/static/ms-symbollockup_signin_light.svg" /></a>
-</div>
+<a class="btn btn-primary" href='{{ auth_uri }}'>Entra ID</a>
 {% endif %}
 
 {% if config.get("B2C_RESET_PASSWORD_AUTHORITY") %}

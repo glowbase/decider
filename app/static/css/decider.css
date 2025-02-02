@@ -93,8 +93,8 @@ body {
     }
 }
 
-#versionPicker a {
-    color: var(--bs-navbar-brand-color) !important;
+#versionPicker .dropdown-item {
+    color: #000;
 }
 
 .nav-btn-group i {
@@ -188,7 +188,7 @@ body {
     --strong-code: #900022;
 
     /* primary */
-    --dhs-blue: #469600;
+    --dhs-blue: #122a55;
     --dhs-blue-rgb: 0,82,136;
     --dhs-gray: #c0c2c4;
     --dhs-dark-gray: #5a5b5d;
@@ -201,8 +201,7 @@ body {
 
     /* color wheel */
     --dhs-gray-20: #edeeee;
-    /* --dhs-blue-60: #003e67; */
-    --dhs-blue-60: white;
+    --dhs-blue-60: #2b497d;
     --dhs-blue-60-rgb: 0,62,103;
     --dhs-red-60: #950e24;
     --dhs-red-60-rgb: 149,14,36;
@@ -373,7 +372,7 @@ strong {
     color: inherit;
     text-decoration-line: underline;
     text-decoration-thickness: 2px;
-    text-decoration-color: var(--dhs-green);
+    text-decoration-color: white;
     text-decoration-style: solid;
     text-decoration-skip-ink: none;
 }
@@ -393,14 +392,13 @@ strong {
 
     --bs-card-cap-color: black;
 
-    --bs-card-border-color: var(--dhs-gray);
+    --bs-card-border-color: var(--dhs-blue);
 
     --bs-card-color: black;
-    --bs-card-bg: var(--dhs-blue-60);
 }
 
 .answer-card.technique-card{
-    --bs-card-cap-bg: var(--dhs-green);
+    --bs-card-cap-bg: var(--dhs-blue);
 }
 
 .answer-card.mitigation-card {
@@ -558,12 +556,12 @@ strong {
 #fullTechniqueSearchBox,
 #answerCardSearchBox {
     outline: 4px solid var(--bs-border-color);
+
 }
 
 /* used for "..." in full search snippets */
 span.redtext {
-    color: rgb(51, 255, 0) !important;
-    font-weight: 700 !important;
+    color: black;
 }
 
 /* ----------------------------------------------------------------------------------------------------------------- */

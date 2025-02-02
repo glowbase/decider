@@ -13,24 +13,16 @@ services:
         ports:
             - '${WEB_IP}:${WEB_PORT}:5000'
         environment:
-            # decider config
-            #KIOSK_MODE: 'yes'
-            # db to [connect to, build]
             DB_HOSTNAME: ${DB_HOSTNAME}
             DB_PORT: ${DB_PORT}
             DB_DATABASE: ${DB_DATABASE}
-            # db admin user [for building db]
             DB_ADMIN_NAME: ${DB_ADMIN_NAME}
             DB_ADMIN_PASS: ${DB_ADMIN_PASS}
-            # db kiosk user [run app under]
             DB_KIOSK_NAME: ${DB_KIOSK_NAME}
             DB_KIOSK_PASS: ${DB_KIOSK_PASS}
-            # app admin [create]
             APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL}
             APP_ADMIN_PASS: ${APP_ADMIN_PASS}
-            # cart encryption key
             CART_ENC_KEY: ${CART_ENC_KEY}
-            # app endpoint [to display to user]
             WEB_IP: ${WEB_IP}
             WEB_PORT: ${WEB_PORT}
         volumes:
