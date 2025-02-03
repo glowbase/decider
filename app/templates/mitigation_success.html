@@ -47,6 +47,7 @@
                 :href="resolveURL($store.success.url)"
                 target="_blank"
                 rel="noreferrer noopener"
+                class="link-attack-orange"
                 aria-label="`ATT&amp;CK Page {{ success.name }} {{ success.id }}`"
             >{{ success.id }}</a><span>]</span>
         </h1>
@@ -82,7 +83,8 @@
                                     <a
                                         :href="resolveURL(tech.internal_url)"
                                         target="_blank"
-                                        rel="noreferrer noopener">
+                                        rel="noreferrer noopener"
+                                        class="link-attack-orange">
                                         <span                                
                                             x-text="tech.tech_id">
                                         </span>

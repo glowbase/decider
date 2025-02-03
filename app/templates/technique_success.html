@@ -50,21 +50,15 @@
         ></p>
 
         {# Tech Name [ID] + ATT&CK Link #}
-        <h1 tabindex="-1" class="fs-2 mb-3" id="successTechNameHeader" class="mb-2">
+        <h1 tabindex="-1" class="fs-2" id="successTechNameHeader" class="mb-2">
             <span>{{ success.name }} [</span><a
                 :href="resolveURL($store.success.url)"
                 target="_blank"
                 rel="noreferrer noopener"
+                class="link-attack-orange"
                 aria-label="`ATT&amp;CK Page {{ success.name }} {{ success.id }}`"
             >{{ success.id }}</a><span>]</span>
         </h1>
-
-        {# Tactics #}
-        <div class="badge-group mb-3">
-            <template x-for="tactic in $store.success.tactics" :key="tactic.tact_id">
-                <span class="badge text-bg-primary" x-text="`${tactic.tact_name} [${tactic.tact_id}]`"></span>
-            </template>
-        </div>
 
         <div>{{ success.description | safe }}</div>
 
@@ -100,7 +94,19 @@
                 </div>
             </div>
         </div>
+
     </header>
+
+    {# Tactics #}
+    <section>
+        <h2 class="fs-3">Tactics</h2>
+
+        <div class="badge-group">
+            <template x-for="tactic in $store.success.tactics" :key="tactic.tact_id">
+                <span class="badge text-bg-secondary" x-text="`${tactic.tact_name} [${tactic.tact_id}]`"></span>
+            </template>
+        </div>
+    </section>
 
     {# Platforms #}
     <section>
@@ -108,7 +114,7 @@
 
         <div class="badge-group">
             <template x-for="platform in $store.success.platforms" :key="platform">
-                <span class="badge text-bg-primary" x-text="platform"></span>
+                <span class="badge text-bg-secondary" x-text="platform"></span>
             </template>
         </div>
     </section>
