@@ -423,18 +423,6 @@ strong {
     background-color: #00ffff20;
 }
 
-.link-attack-orange {
-    color: var(--attack-orange) !important;
-    -webkit-text-decoration-color: var(--attack-orange) !important;
-    text-decoration-color: var(--attack-orange) !important;
-}
-.link-attack-orange:hover,
-.link-attack-orange:focus {
-    color: var(--attack-orange-alt) !important;
-    -webkit-text-decoration-color: var(--attack-orange-alt) !important;
-    text-decoration-color: var(--attack-orange-alt) !important;
-}
-
 /* <code> contrast adjust */
 .strong-code {
     color: var(--strong-code) !important;
@@ -486,6 +474,7 @@ strong {
 
 #successTechNameHeader {
     margin-top: 16px;
+    font-weight: bold;
 }
 
 #successTechAndSubsList {
@@ -502,7 +491,7 @@ strong {
 
 .badge {
     font-size: 13px;
-    padding: 8px 10px;
+    padding: 6px 8px;
     border-radius: 20px;
 }
 
@@ -573,7 +562,6 @@ span.redtext {
 .classification-banner:before,
 .classification-banner:not([data-single-banner]):after {
     display: block;
-    background-color: #505050;
     color: #fff;
     font-weight: bold;
     text-align: center;
@@ -585,11 +573,11 @@ span.redtext {
 }
 .classification-banner[data-classification^='U']:before,
 .classification-banner[data-classification^='U']:after {
-    background-color: #08680e;
+    color: #ff0000;
 }
-.classification-banner[data-classification^='C']:before,
-.classification-banner[data-classification^='C']:after {
-    background-color: #175b96;
+.classification-banner[data-classification^='O']:before,
+.classification-banner[data-classification^='O']:after {
+    color: #ff0000;
 }
 .classification-banner[data-classification^='S']:before,
 .classification-banner[data-classification^='S']:after {
@@ -627,3 +615,26 @@ body.classification-banner:not([data-single-banner]):after {
 }
 
 /* ----------------------------------------------------------------------------------------------------------------- */
+
+.avatar {
+    padding: 8px 11px;
+    min-height: 42px;
+    min-width: 42px;
+    background-color: #000;
+    color: #fff;
+    border-radius: 50%;
+    border-color: #fff;
+}
+
+.panel-title {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.panel-heading {
+    font-size: 20px;
+}
+
+.profile-panel {
+        
+}

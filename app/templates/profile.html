@@ -16,24 +16,25 @@
 
             <div class="tile is-parent is-6">
                 <div class="tile is-child">
+                    <p class="panel-title">Profile</p>
 
                     <!-- Admin Tools -->
                     {% if data.admin_permission %}
-                    <nav class="panel profile-panel">
+                    <section class="panel profile-panel">
                         <p class="panel-heading">Administrator Tools</p>
 
                         <a href="/admin/user" class="panel-block">
                             <span class="panel-icon">
-                                <i class="mdi mdi-24px mdi-account" aria-hidden="true"></i>
-                            </span>&nbsp;
+                                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                            </span>
                             User Management
                         </a>
-                    </nav>
+                    </section>
                     {% endif %}
 
                     <!-- Editor Tools -->
                     {% if data.edit_permission %}
-                    <nav class="panel profile-panel">
+                    <section class="panel profile-panel">
                         <p class="panel-heading">Editor Tools</p>
 
                         <a href="/edit/mismapping" class="panel-block">
@@ -56,11 +57,11 @@
                             </span>&nbsp;
                             Audit Card Content
                         </a>
-                    </nav>
+                    </section>
                     {% endif %}
 
                     <!-- User Options -->
-                    <nav class="panel profile-panel">
+                    <section class="panel profile-panel">
                         <p class="panel-heading">User Settings</p>
                         <a href="/profile/change_password" class="panel-block">
                             <span class="panel-icon">
@@ -68,7 +69,7 @@
                             </span>&nbsp;
                             Change Password
                         </a>
-                    </nav>
+                    </section>
 
                 </div>
             </div>

@@ -9,7 +9,7 @@
         "                        user_additions.html to specify CDN variants of libraries to load (be careful of order)"
     ],
     "base_url_href"         : "/",
-    "use_minified_srcs"     : true,
+    "use_minified_srcs"     : false,
     "classification_level"  : "",
     "classification_message": "",
     "use_cdn_resources"     : false
