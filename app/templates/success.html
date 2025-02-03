@@ -59,7 +59,6 @@
             >{{ success.id }}</a><span>]</span>
         </h1>
 
-        {# Tactics #}
         <div class="badge-group mb-3">
             <template x-for="tactic in $store.success.tactics" :key="tactic.tact_id">
                 <span class="badge text-bg-primary" x-text="`${tactic.tact_name} [${tactic.tact_id}]`"></span>
